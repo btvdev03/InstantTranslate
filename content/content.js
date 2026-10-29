@@ -1,14 +1,14 @@
 /**
- * InstantTranslate - Content Script (Phiên bản Giao Diện Thuần Việt - Chuẩn Cốc Cốc / Laban Dict)
- * Thiết kế thân thuộc, gần gũi với người dùng Việt Nam: rõ ràng, đậm đà, dễ đọc, hỗ trợ từ điển & phát âm chuẩn.
- * Cách ly 100% bằng Closed Shadow DOM.
+ * InstantTranslate - Content Script (V4 - Tối Ưu Trải Nghiệm & Căn Chỉnh Khung Hình)
+ * Khắc phục triệt để lỗi tràn màn hình (bị ẩn khúc dưới), chữ quá đậm thô, và tối ưu hiển thị đoạn văn dài.
+ * Phong cách Cốc Cốc / Laban / Zalo tinh tế, thanh thoát, dễ đọc.
  */
 
 (function () {
   if (window.__instantTranslateLoaded) return;
   window.__instantTranslateLoaded = true;
 
-  // Bản đồ ngôn ngữ hiển thị tiếng Việt & cờ
+  // Bản đồ ngôn ngữ
   const LANG_DATA = {
     vi: { name: "Tiếng Việt", short: "Việt", flag: "🇻🇳", tts: "vi-VN" },
     en: { name: "Tiếng Anh", short: "Anh", flag: "🇺🇸", tts: "en-US" },
@@ -22,15 +22,15 @@
     ru: { name: "Tiếng Nga", short: "Nga", flag: "🇷🇺", tts: "ru-RU" },
     th: { name: "Tiếng Thái", short: "Thái", flag: "🇹🇭", tts: "th-TH" },
     it: { name: "Tiếng Ý", short: "Ý", flag: "🇮🇹", tts: "it-IT" },
-    auto: { name: "Tự động nhận diện", short: "Tự động", flag: "🌐", tts: "en-US" }
+    auto: { name: "Tự động phát hiện", short: "Tự động", flag: "🌐", tts: "en-US" }
   };
 
-  // Cấu hình người dùng
+  // Cấu hình
   let settings = {
     enabled: true,
     targetLang: "vi",
     sourceLang: "auto",
-    triggerMode: "auto", // "auto" | "icon" | "ctrl" | "alt"
+    triggerMode: "auto",
     showDict: true,
     autoTts: false,
     theme: "auto",
@@ -44,6 +44,7 @@
   let activeInputElement = null;
   let currentDetectedSourceLang = "en";
   let activeTranslateRequest = 0;
+  let activeSelectionText = "";
 
   // Đọc cài đặt
   function refreshSettings() {
@@ -65,7 +66,7 @@
     });
   }
 
-  // Tạo phần tử máy chủ cách ly
+  // Khởi tạo Shadow Host
   const host = document.createElement("div");
   host.id = "instant-translate-host";
   host.style.position = "absolute";
@@ -77,10 +78,9 @@
   host.style.pointerEvents = "none";
   document.documentElement.appendChild(host);
 
-  // Gắn Shadow DOM kín
   const shadow = host.attachShadow({ mode: "closed" });
 
-  // CSS Phong cách Thuần Việt (Laban Dict + Cốc Cốc + Zalo UI)
+  // Stylesheet
   const styleEl = document.createElement("style");
   styleEl.textContent = `
     * {
@@ -102,7 +102,7 @@
       user-select: none;
     }
 
-    /* Nút Icon tròn kích hoạt nổi khi bôi đen */
+    /* Nút trigger icon tròn */
     .vn-trigger-btn {
       width: 32px;
       height: 32px;
@@ -129,19 +129,19 @@
       fill: #ffffff;
     }
 
-    /* Cửa Sổ Bảng Dịch (Phong cách Từ Điển Việt Nam thân thuộc) */
+    /* KHUNG THẺ DỊCH CHÍNH (KHÔNG BAO GIỜ TRÀN MÀN HÌNH) */
     .vn-card {
       position: absolute;
-      width: 390px;
+      width: 480px;
       min-width: 320px;
       max-width: 92vw;
       border-radius: 14px;
       background: #ffffff;
       color: #1e293b;
       box-shadow: 
-        0 16px 40px -8px rgba(0, 80, 200, 0.2),
-        0 4px 16px rgba(0, 0, 0, 0.08),
-        0 0 0 1px #dbe5f0;
+        0 20px 48px -8px rgba(0, 40, 120, 0.22),
+        0 6px 18px -2px rgba(0, 0, 0, 0.08),
+        0 0 0 1px rgba(200, 215, 235, 0.9);
       overflow: hidden;
       display: flex;
       flex-direction: column;
@@ -150,29 +150,30 @@
 
     @media (prefers-color-scheme: dark) {
       .vn-card {
-        background: #181d28;
+        background: #151922;
         color: #f1f5f9;
         box-shadow: 
-          0 20px 48px -8px rgba(0, 0, 0, 0.65),
-          0 6px 20px rgba(0, 0, 0, 0.4),
-          0 0 0 1px #2e384d;
+          0 24px 54px -8px rgba(0, 0, 0, 0.75),
+          0 8px 24px -2px rgba(0, 0, 0, 0.5),
+          0 0 0 1px rgba(255, 255, 255, 0.12);
       }
     }
 
-    /* Header chuẩn phong cách Tiện Ích Trình Duyệt Việt Nam */
+    /* HEADER */
     .vn-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 9px 13px;
-      background: #f0f5fc;
-      border-bottom: 1.5px solid #e1e9f4;
+      padding: 10px 14px;
+      background: #f1f5fb;
+      border-bottom: 1px solid #dce5f2;
+      flex-shrink: 0;
     }
 
     @media (prefers-color-scheme: dark) {
       .vn-header {
-        background: #202636;
-        border-color: #2c354a;
+        background: #1c2230;
+        border-color: rgba(255, 255, 255, 0.08);
       }
     }
 
@@ -190,7 +191,6 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 2px 6px rgba(0, 104, 255, 0.3);
     }
 
     .vn-app-icon svg {
@@ -202,7 +202,7 @@
     .vn-header-title {
       font-size: 13px;
       font-weight: 700;
-      color: #004ecc;
+      color: #0050cc;
       letter-spacing: -0.2px;
     }
 
@@ -212,32 +212,31 @@
       }
     }
 
-    /* Thanh Chuyển Ngôn Ngữ Nổi */
+    /* Thanh cờ ngôn ngữ */
     .vn-lang-badge {
       display: flex;
       align-items: center;
       gap: 5px;
-      padding: 2.5px 8px;
+      padding: 3px 9px;
       border-radius: 20px;
       background: #ffffff;
       border: 1px solid #c7d8ee;
       font-size: 11px;
       font-weight: 600;
       color: #1e3a8a;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
     }
 
     @media (prefers-color-scheme: dark) {
       .vn-lang-badge {
-        background: #262e42;
+        background: #242c3d;
         border-color: #3b4763;
         color: #93c5fd;
       }
     }
 
     .vn-swap-icon {
-      width: 17px;
-      height: 17px;
+      width: 18px;
+      height: 18px;
       border-radius: 50%;
       border: none;
       background: #e8f0fe;
@@ -272,7 +271,6 @@
       fill: currentColor;
     }
 
-    /* Nút Thao Tác Header (Ghim & Đóng) */
     .vn-header-btns {
       display: flex;
       align-items: center;
@@ -280,8 +278,8 @@
     }
 
     .vn-tool-btn {
-      width: 25px;
-      height: 25px;
+      width: 26px;
+      height: 26px;
       border-radius: 6px;
       border: none;
       background: transparent;
@@ -323,40 +321,36 @@
       fill: currentColor;
     }
 
-    /* Thân Hộp Dịch */
+    /* THÂN HỘP DỊCH (TỰ ĐỘNG SCROLL, KHÔNG BAO GIỜ BỊ TRÀN) */
     .vn-body {
-      padding: 12px 14px;
+      padding: 12px 16px;
       display: flex;
       flex-direction: column;
       gap: 10px;
-      max-height: 400px;
       overflow-y: auto;
+      flex: 1;
+      min-height: 0;
     }
 
     .vn-body::-webkit-scrollbar {
-      width: 5px;
+      width: 6px;
     }
     .vn-body::-webkit-scrollbar-thumb {
       background: #cbd5e1;
       border-radius: 4px;
     }
 
-    /* 1. KHỐI NGHĨA TIẾNG VIỆT (Tâm điểm chính - Đậm đà, nổi bật) */
+    @media (prefers-color-scheme: dark) {
+      .vn-body::-webkit-scrollbar-thumb {
+        background: #334155;
+      }
+    }
+
+    /* 1. KHỐI BẢN DỊCH CHÍNH (ĐẸP, DỄ ĐỌC, CÂN ĐỐI) */
     .vn-result-box {
-      background: #f0f7ff;
-      border: 1.5px solid #bfdbfe;
-      border-radius: 11px;
-      padding: 12px 14px;
       display: flex;
       flex-direction: column;
       gap: 6px;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      .vn-result-box {
-        background: #1a2336;
-        border-color: #2b3954;
-      }
     }
 
     .vn-result-header {
@@ -368,9 +362,9 @@
     .vn-result-tag {
       font-size: 11px;
       font-weight: 800;
-      color: #0056cc;
+      color: #0068ff;
       text-transform: uppercase;
-      letter-spacing: 0.3px;
+      letter-spacing: 0.5px;
       display: flex;
       align-items: center;
       gap: 4px;
@@ -378,78 +372,34 @@
 
     @media (prefers-color-scheme: dark) {
       .vn-result-tag {
-        color: #93c5fd;
+        color: #60a5fa;
       }
     }
 
+    /* Typography bản dịch: Rõ ràng, thoáng đãng, dễ đọc, không bị thô */
     .vn-result-text {
-      font-size: 16px;
-      font-weight: 700;
-      line-height: 1.55;
-      color: #0a2540;
+      font-size: 15px;
+      font-weight: 500;
+      line-height: 1.65;
+      color: #0f172a;
       word-break: break-word;
       user-select: text;
     }
 
     @media (prefers-color-scheme: dark) {
       .vn-result-text {
-        color: #f8fafc;
+        color: #f1f5f9;
       }
     }
 
-    /* 2. KHỐI VĂN BẢN GỐC (Tinh gọn, rõ ràng) */
-    .vn-source-box {
-      background: #fafbfc;
-      border: 1px solid #e2e8f0;
-      border-radius: 9px;
-      padding: 8px 11px;
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      .vn-source-box {
-        background: #1e2433;
-        border-color: #2c3547;
-      }
-    }
-
-    .vn-source-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 10.5px;
-      font-weight: 700;
-      color: #64748b;
-      text-transform: uppercase;
-      letter-spacing: 0.4px;
-    }
-
-    .vn-source-text {
-      font-size: 13px;
-      line-height: 1.45;
-      color: #334155;
-      word-break: break-word;
-      max-height: 60px;
-      overflow-y: auto;
-      user-select: text;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      .vn-source-text {
-        color: #cbd5e1;
-      }
-    }
-
-    /* Phiên âm IPA phong cách Từ điển Anh - Việt (Laban/Cốc Cốc) */
+    /* Phiên âm IPA */
     .vn-ipa-wrap {
       display: inline-flex;
       align-items: center;
       gap: 5px;
       font-size: 12px;
       color: #0284c7;
-      font-family: ui-monospace, Consolas, "Courier New", monospace;
+      font-family: ui-monospace, Consolas, monospace;
       background: #e0f2fe;
       padding: 2px 7px;
       border-radius: 5px;
@@ -459,16 +409,74 @@
 
     @media (prefers-color-scheme: dark) {
       .vn-ipa-wrap {
-        background: #0f2c4a;
+        background: #0c2842;
         color: #38bdf8;
       }
     }
 
-    /* 3. TỪ ĐIỂN TRA TỪ LOẠI (Danh từ, Động từ, Tính từ chuẩn Việt) */
+    /* 2. KHỐI VĂN BẢN GỐC (DẠNG THU GỌN / ACCORDION ĐỂ KHÔNG CHIẾM DIỆN TÍCH) */
+    .vn-source-accordion {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      background: #f8fafc;
+      overflow: hidden;
+      margin-top: 2px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .vn-source-accordion {
+        border-color: rgba(255, 255, 255, 0.08);
+        background: #1a202c;
+      }
+    }
+
+    .vn-source-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #64748b;
+      cursor: pointer;
+      user-select: none;
+      background: transparent;
+    }
+
+    .vn-source-toggle:hover {
+      background: rgba(0, 0, 0, 0.03);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .vn-source-toggle:hover {
+        background: rgba(255, 255, 255, 0.04);
+      }
+    }
+
+    .vn-source-content {
+      padding: 8px 10px;
+      border-top: 1px solid #e2e8f0;
+      font-size: 12.5px;
+      line-height: 1.5;
+      color: #475569;
+      word-break: break-word;
+      max-height: 100px;
+      overflow-y: auto;
+      user-select: text;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .vn-source-content {
+        border-color: rgba(255, 255, 255, 0.08);
+        color: #94a3b8;
+      }
+    }
+
+    /* 3. TỪ ĐIỂN TỪ LOẠI (Cho từ đơn) */
     .vn-dict-group {
       display: flex;
       flex-direction: column;
-      gap: 7px;
+      gap: 6px;
       padding-top: 8px;
       border-top: 1px dashed #cbd5e1;
     }
@@ -492,17 +500,12 @@
       gap: 3px;
     }
 
-    .vn-pos-header {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
     .vn-pos-badge {
-      font-size: 10.5px;
+      font-size: 10px;
       font-weight: 700;
       padding: 1.5px 6px;
       border-radius: 4px;
+      width: fit-content;
       text-transform: uppercase;
     }
 
@@ -522,7 +525,6 @@
       display: flex;
       flex-wrap: wrap;
       gap: 4px;
-      padding-left: 4px;
     }
 
     .vn-syn-chip {
@@ -554,29 +556,30 @@
       }
     }
 
-    /* Thanh Dưới (Footer Thao Tác) */
+    /* FOOTER THAO TÁC LUÔN NẰM CỐ ĐỊNH Ở ĐÁY KHUNG (KHÔNG BAO GIỜ BỊ ẨN) */
     .vn-footer {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 9px 13px;
+      padding: 9px 14px;
       background: #f8fafc;
-      border-top: 1.5px solid #e2e8f0;
+      border-top: 1px solid #e2e8f0;
+      flex-shrink: 0;
       gap: 8px;
     }
 
     @media (prefers-color-scheme: dark) {
       .vn-footer {
-        background: #1c2230;
-        border-color: #2b3545;
+        background: #181d28;
+        border-color: rgba(255, 255, 255, 0.08);
       }
     }
 
     .vn-select-lang {
       font-size: 11.5px;
       font-weight: 600;
-      padding: 4px 6px;
-      border-radius: 7px;
+      padding: 4px 7px;
+      border-radius: 6px;
       border: 1px solid #cbd5e1;
       background: #ffffff;
       color: #1e293b;
@@ -586,8 +589,8 @@
 
     @media (prefers-color-scheme: dark) {
       .vn-select-lang {
-        background: #262e3f;
-        border-color: #3f4b61;
+        background: #242c3d;
+        border-color: #3a4659;
         color: #f1f5f9;
       }
     }
@@ -604,7 +607,7 @@
       gap: 4px;
       font-size: 11.5px;
       font-weight: 700;
-      padding: 5px 9px;
+      padding: 5px 10px;
       border-radius: 7px;
       border: 1px solid #cbd5e1;
       background: #ffffff;
@@ -616,7 +619,6 @@
     .vn-btn:hover {
       background: #f1f5f9;
       color: #0f172a;
-      border-color: #94a3b8;
     }
 
     @media (prefers-color-scheme: dark) {
@@ -631,7 +633,6 @@
       }
     }
 
-    /* Nút chính Sao Chép (Xanh Zalo / Cốc Cốc) */
     .vn-btn-primary {
       background: #0068ff !important;
       color: #ffffff !important;
@@ -641,12 +642,10 @@
 
     .vn-btn-primary:hover {
       background: #0052cc !important;
-      box-shadow: 0 3px 10px rgba(0, 104, 255, 0.45);
     }
 
     .vn-btn-primary.copied {
       background: #16a34a !important;
-      box-shadow: 0 2px 6px rgba(22, 163, 74, 0.4) !important;
     }
 
     .vn-btn svg {
@@ -655,7 +654,6 @@
       fill: currentColor;
     }
 
-    /* Hiệu ứng thanh tải shimmer */
     .vn-shimmer-bar {
       height: 18px;
       border-radius: 5px;
@@ -678,7 +676,7 @@
     }
 
     @keyframes vnSpring {
-      0% { opacity: 0; transform: translateY(8px) scale(0.97); }
+      0% { opacity: 0; transform: translateY(6px) scale(0.98); }
       100% { opacity: 1; transform: translateY(0) scale(1); }
     }
 
@@ -693,7 +691,6 @@
   container.className = "vn-wrapper";
   shadow.appendChild(container);
 
-  // Thư viện SVG icon chuẩn
   const ICONS = {
     book: `<svg viewBox="0 0 24 24"><path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/></svg>`,
     speaker: `<svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`,
@@ -703,10 +700,10 @@
     close: `<svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>`,
     swap: `<svg viewBox="0 0 24 24"><path d="M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"/></svg>`,
     replace: `<svg viewBox="0 0 24 24"><path d="M19 8l-4 4h3c0 3.31-2.69 6-6 6-1.01 0-1.97-.25-2.8-.7l-1.46 1.46C8.97 19.54 10.43 20 12 20c4.42 0 8-3.58 8-8h3l-4-4zM6 12c0-3.31 2.69-6 6-6 1.01 0 1.97.25 2.8.7l1.46-1.46C15.03 4.46 13.57 4 12 4c-4.42 0-8 3.58-8 8H1l4 4 4-4H6z"/></svg>`,
-    external: `<svg viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>`
+    external: `<svg viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>`,
+    arrowDown: `<svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>`
   };
 
-  // Phát âm văn bản
   function speak(text, lang) {
     if (!text || !("speechSynthesis" in window)) return;
     window.speechSynthesis.cancel();
@@ -716,33 +713,64 @@
     window.speechSynthesis.speak(u);
   }
 
-  // Đóng UI
   function hideUI() {
     container.innerHTML = "";
     container.style.display = "none";
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
   }
 
-  // Căn chỉnh vị trí thông minh
+  // THUẬT TOÁN ĐỊNH VỊ THÔNG MINH - ĐẢM BẢO 100% NẰM TRỌN TRONG MÀN HÌNH
   function position(elem, rect) {
     container.style.display = "block";
     container.style.visibility = "hidden";
 
     requestAnimationFrame(() => {
-      const w = elem.offsetWidth || 390;
-      const h = elem.offsetHeight || 260;
+      const viewportW = window.innerWidth;
+      const viewportH = window.innerHeight;
       const scrollX = window.scrollX;
       const scrollY = window.scrollY;
 
+      // Chiều rộng thích ứng: văn bản dài mở rộng ra để dễ đọc (tối đa 540px)
+      const isLongText = (activeSelectionText || "").length > 80;
+      const targetWidth = isLongText ? Math.min(540, viewportW - 32) : Math.min(420, viewportW - 32);
+      elem.style.width = `${targetWidth}px`;
+
+      // Giới hạn chiều cao tối đa của card không vượt quá 85% chiều cao màn hình
+      const maxAllowedH = Math.min(viewportH - 32, 480);
+      elem.style.maxHeight = `${maxAllowedH}px`;
+
+      const elemW = elem.offsetWidth || targetWidth;
+      const elemH = elem.offsetHeight || 300;
+
+      // Căn chỉnh trục ngang (Horizontal)
       let left = rect.left + scrollX;
-      if (left + w > scrollX + window.innerWidth - 12) {
-        left = scrollX + window.innerWidth - w - 12;
+      if (left + elemW > scrollX + viewportW - 16) {
+        left = scrollX + viewportW - elemW - 16;
       }
-      if (left < scrollX + 12) left = scrollX + 12;
+      if (left < scrollX + 16) {
+        left = scrollX + 16;
+      }
+
+      // Căn chỉnh trục dọc (Vertical): Tính toán khoảng trống bên dưới và bên trên
+      const spaceBelow = viewportH - rect.bottom;
+      const spaceAbove = rect.top;
 
       let top = rect.bottom + 8 + scrollY;
-      if (window.innerHeight - rect.bottom < h + 20 && rect.top > h + 20) {
-        top = rect.top - h - 8 + scrollY;
+
+      // Nếu không đủ chỗ bên dưới
+      if (spaceBelow < elemH + 16) {
+        if (spaceAbove >= elemH + 16 || spaceAbove > spaceBelow) {
+          // Lật lên trên vùng bôi đen
+          top = rect.top + scrollY - elemH - 8;
+        } else {
+          // Nếu cả 2 phía đều chật, ghim sát đáy màn hình (cách mép 14px)
+          top = scrollY + viewportH - elemH - 14;
+        }
+      }
+
+      // Đảm bảo không bị tràn lên mép trên
+      if (top < scrollY + 12) {
+        top = scrollY + 12;
       }
 
       container.style.left = `${Math.round(left)}px`;
@@ -751,7 +779,6 @@
     });
   }
 
-  // Thay thế chữ trên web
   function replaceText(newText) {
     if (!newText) return;
 
@@ -781,7 +808,6 @@
     navigator.clipboard.writeText(newText);
   }
 
-  // Nút kích hoạt dạng icon
   function showIcon(text, rect) {
     container.innerHTML = "";
     const btn = document.createElement("button");
@@ -814,22 +840,24 @@
     return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
 
-  // Hiển thị khung dịch chuẩn giao diện Việt Nam
+  // RENDER CARD
   function render(text, rect, targetLangOverride) {
     const curTarget = targetLangOverride || settings.targetLang || "vi";
     const src = LANG_DATA[currentDetectedSourceLang] || { flag: "🌐", short: currentDetectedSourceLang };
     const trg = LANG_DATA[curTarget] || { flag: "🇻🇳", short: "Việt" };
 
+    const wordCount = text.split(/\s+/).filter(Boolean).length;
+    const isLongParagraph = text.length > 70;
+
     container.innerHTML = `
       <div class="vn-card">
-        <!-- Header -->
+        <!-- 1. Header (Cố định ở trên) -->
         <div class="vn-header">
           <div class="vn-header-left">
             <div class="vn-app-icon">${ICONS.book}</div>
             <span class="vn-header-title">Dịch Tiếng Việt</span>
           </div>
 
-          <!-- Huy hiệu cờ ngôn ngữ -->
           <div class="vn-lang-badge">
             <span>${src.flag} ${src.short}</span>
             <button class="vn-swap-icon" id="vn-swap-btn" title="Đổi chiều ngôn ngữ">
@@ -838,7 +866,6 @@
             <span>${trg.flag} ${trg.short}</span>
           </div>
 
-          <!-- Nút thao tác -->
           <div class="vn-header-btns">
             <button class="vn-tool-btn ${isPinned ? "pinned" : ""}" id="vn-pin-btn" title="${isPinned ? "Bỏ ghim" : "Ghim cửa sổ"}">
               ${ICONS.pin}
@@ -849,13 +876,13 @@
           </div>
         </div>
 
-        <!-- Thân hộp dịch -->
+        <!-- 2. Body (Cuộn nội dung độc lập) -->
         <div class="vn-body">
-          <!-- 1. KHỐI BẢN DỊCH TIẾNG VIỆT (TÂM ĐIỂM) -->
+          <!-- BẢN DỊCH CHÍNH (ĐẦU TIÊN & NỔI BẬT NHẤT) -->
           <div class="vn-result-box">
             <div class="vn-result-header">
-              <span class="vn-result-tag">🇻🇳 NGHĨA TIẾNG VIỆT</span>
-              <button class="vn-tool-btn" id="vn-tts-res" title="Phát âm tiếng Việt" style="display:none;">
+              <span class="vn-result-tag">BẢN DỊCH TIẾNG ${trg.short.toUpperCase()}</span>
+              <button class="vn-tool-btn" id="vn-tts-res" title="Phát âm bản dịch" style="display:none;">
                 ${ICONS.speaker}
               </button>
             </div>
@@ -863,25 +890,30 @@
               <div class="vn-shimmer-bar" style="width: 88%;"></div>
               <div class="vn-shimmer-bar" style="width: 60%;"></div>
             </div>
-          </div>
-
-          <!-- 2. KHỐI VĂN BẢN GỐC -->
-          <div class="vn-source-box">
-            <div class="vn-source-header">
-              <span>VĂN BẢN GỐC</span>
-              <button class="vn-tool-btn" id="vn-tts-src" title="Phát âm bản gốc">
-                ${ICONS.speaker}
-              </button>
-            </div>
-            <div class="vn-source-text">${escapeHtml(text)}</div>
             <div id="vn-ipa-container" style="display:none;"></div>
           </div>
 
-          <!-- 3. TỪ ĐIỂN TRA TỪ LOẠI -->
+          <!-- VĂN BẢN GỐC (Dạng Accordion xếp gọn gàng để không chiếm chỗ bản dịch) -->
+          <div class="vn-source-accordion">
+            <div class="vn-source-toggle" id="vn-src-toggle">
+              <span>📄 Văn bản gốc (${wordCount} từ)</span>
+              <div style="display: flex; align-items: center; gap: 4px;">
+                <button class="vn-tool-btn" id="vn-tts-src" title="Phát âm bản gốc" style="width:20px;height:20px;">
+                  ${ICONS.speaker}
+                </button>
+                <span id="vn-src-arrow">▾</span>
+              </div>
+            </div>
+            <div class="vn-source-content" id="vn-src-content" style="${isLongParagraph ? 'display:none;' : 'display:block;'}">
+              ${escapeHtml(text)}
+            </div>
+          </div>
+
+          <!-- TỪ ĐIỂN TỪ LOẠI (Cho từ đơn) -->
           <div id="vn-dict-container" style="display:none;"></div>
         </div>
 
-        <!-- Thanh công cụ dưới -->
+        <!-- 3. Footer Thao Tác (LUÔN CỐ ĐỊNH Ở ĐÁY, KHÔNG BAO GIỜ BỊ ẨN) -->
         <div class="vn-footer">
           <select class="vn-select-lang" id="vn-lang-select">
             <option value="vi" ${curTarget === "vi" ? "selected" : ""}>🇻🇳 Tiếng Việt</option>
@@ -901,7 +933,7 @@
               ${ICONS.copy}
               <span>Sao chép</span>
             </button>
-            <button class="vn-tool-btn" id="vn-ext-btn" title="Mở trang Google Dịch">
+            <button class="vn-tool-btn" id="vn-ext-btn" title="Mở trên Google Dịch">
               ${ICONS.external}
             </button>
           </div>
@@ -912,7 +944,18 @@
     const card = container.querySelector(".vn-card");
     position(card, rect);
 
-    // Xử lý sự kiện
+    // Toggle Accordion văn bản gốc
+    const srcToggle = container.querySelector("#vn-src-toggle");
+    const srcContent = container.querySelector("#vn-src-content");
+    const srcArrow = container.querySelector("#vn-src-arrow");
+    srcToggle.addEventListener("click", (e) => {
+      if (e.target.closest("#vn-tts-src")) return;
+      const isHidden = srcContent.style.display === "none";
+      srcContent.style.display = isHidden ? "block" : "none";
+      srcArrow.textContent = isHidden ? "▴" : "▾";
+      position(card, rect);
+    });
+
     container.querySelector("#vn-pin-btn").addEventListener("click", (e) => {
       isPinned = !isPinned;
       e.currentTarget.classList.toggle("pinned", isPinned);
@@ -932,7 +975,8 @@
       translate(text, rect, nextTarget);
     });
 
-    container.querySelector("#vn-tts-src").addEventListener("click", () => {
+    container.querySelector("#vn-tts-src").addEventListener("click", (e) => {
+      e.stopPropagation();
       speak(text, currentDetectedSourceLang);
     });
 
@@ -965,7 +1009,7 @@
     return curTarget;
   }
 
-  // Gọi dịch thuật
+  // GỌI API DỊCH
   function translate(text, rect, targetLangOverride) {
     const curTarget = targetLangOverride || settings.targetLang || "vi";
     render(text, rect, curTarget);
@@ -994,7 +1038,7 @@
           container.dataset.translatedText = d.translatedText;
           currentDetectedSourceLang = d.sourceLang || "en";
 
-          // Hiển thị nghĩa tiếng Việt
+          // Hiển thị bản dịch với font chữ thanh thoát, dễ đọc
           resContent.innerHTML = `<div class="vn-result-text">${escapeHtml(d.translatedText)}</div>`;
           if (ttsRes) ttsRes.style.display = "flex";
 
@@ -1004,7 +1048,7 @@
             ipaContainer.innerHTML = `<div class="vn-ipa-wrap">🔊 [${escapeHtml(d.transliteration)}]</div>`;
           }
 
-          // Tra từ loại (chuẩn từ điển Cốc Cốc / Laban)
+          // Tra từ loại (chỉ khi có từ điển)
           if (settings.showDict && d.dict && d.dict.length > 0 && dictContainer) {
             let dictHtml = `
               <div class="vn-dict-group">
@@ -1024,7 +1068,7 @@
                     <span class="vn-pos-badge ${posClass}">${escapeHtml(posLabel)}</span>
                   </div>
                   <div class="vn-synonym-list">
-                    ${item.terms.map(t => `<span class="vn-syn-chip" title="Bấm để chép từ này">${escapeHtml(t)}</span>`).join("")}
+                    ${item.terms.map(t => `<span class="vn-syn-chip" title="Bấm để chép">${escapeHtml(t)}</span>`).join("")}
                   </div>
                 </div>
               `;
@@ -1033,7 +1077,6 @@
             dictContainer.innerHTML = dictHtml;
             dictContainer.style.display = "flex";
 
-            // Click vào từ đồng nghĩa để chép
             dictContainer.querySelectorAll(".vn-syn-chip").forEach(chip => {
               chip.addEventListener("click", () => {
                 navigator.clipboard.writeText(chip.textContent);
@@ -1048,6 +1091,7 @@
             speak(d.translatedText, d.targetLang);
           }
 
+          // Căn chỉnh lại vị trí để đảm bảo luôn nhìn thấy trọn vẹn
           const card = container.querySelector(".vn-card");
           if (card) position(card, rect);
         } else {
@@ -1057,7 +1101,7 @@
     );
   }
 
-  // Bắt sự kiện bôi đen
+  // Bắt sự kiện bôi đen chuột
   function onSelect(event) {
     if (!settings.enabled) return;
 
@@ -1087,6 +1131,8 @@
     activeRange = sel.getRangeAt(0).cloneRange();
     const rect = activeRange.getBoundingClientRect();
     if (rect.width === 0 && rect.height === 0) return;
+
+    activeSelectionText = text;
 
     const mode = settings.triggerMode || "auto";
     if (mode === "ctrl" && !event.ctrlKey && !event.metaKey) return;
@@ -1133,10 +1179,11 @@
   chrome.runtime?.onMessage?.addListener((msg) => {
     if (msg.action === "TRIGGER_SELECTION_TRANSLATE" && msg.text) {
       const sel = window.getSelection();
-      let rect = { left: window.innerWidth / 2 - 195, top: 120, right: window.innerWidth / 2 + 195, bottom: 140 };
+      let rect = { left: window.innerWidth / 2 - 200, top: 120, right: window.innerWidth / 2 + 200, bottom: 140 };
       if (sel && sel.rangeCount > 0) {
         rect = sel.getRangeAt(0).getBoundingClientRect();
       }
+      activeSelectionText = msg.text;
       translate(msg.text, rect);
     }
   });
