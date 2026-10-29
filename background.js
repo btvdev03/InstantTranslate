@@ -1,24 +1,29 @@
 /**
  * InstantTranslate - Background Service Worker
- * Handles translation API calls with fallback, context menu, and preferences.
+ * Handles translation API calls with fallback, context menu, preferences, and history storage.
  */
 
 const DEFAULT_SETTINGS = {
   enabled: true,
   targetLang: "vi",
   sourceLang: "auto",
-  triggerMode: "auto", // "auto" | "icon" | "ctrl" | "alt"
+  triggerMode: "auto", // "auto" | "icon" | "ctrl" | "alt" | "doubleclick"
   showDict: true,
   autoTts: false,
   theme: "auto", // "auto" | "light" | "dark"
+  enableReplace: true,
+  doubleClickToTranslate: false,
   excludedDomains: []
 };
 
-// Initialize settings on install
-chrome.runtime.onInstalled.addListener(async (details) => {
-  const current = await chrome.storage.local.get("settings");
+// Initialize settings and context menu on install
+chrome.runtime.onInstalled.addListener(async () => {
+  const current = await chrome.storage.local.get(["settings", "history"]);
   if (!current.settings) {
     await chrome.storage.local.set({ settings: DEFAULT_SETTINGS });
+  }
+  if (!current.history) {
+    await chrome.storage.local.set({ history: [] });
   }
 
   // Create Context Menu
@@ -31,7 +36,7 @@ chrome.runtime.onInstalled.addListener(async (details) => {
       });
     });
   } catch (err) {
-    console.warn("Context menu initialization error:", err);
+    console.warn("Context menu error:", err);
   }
 });
 
@@ -48,6 +53,35 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     }
   }
 });
+
+// Save translation into history (max 50 entries)
+async function saveToHistory(entry) {
+  try {
+    const res = await chrome.storage.local.get("history");
+    let history = Array.isArray(res.history) ? res.history : [];
+    
+    // Filter out duplicate if exact same text was just translated
+    history = history.filter(h => !(h.originalText === entry.originalText && h.targetLang === entry.targetLang));
+    
+    // Prepend new entry
+    history.unshift({
+      id: "hist_" + Date.now() + "_" + Math.random().toString(36).substr(2, 5),
+      originalText: entry.originalText,
+      translatedText: entry.translatedText,
+      sourceLang: entry.sourceLang,
+      targetLang: entry.targetLang,
+      timestamp: Date.now()
+    });
+
+    if (history.length > 50) {
+      history = history.slice(0, 50);
+    }
+
+    await chrome.storage.local.set({ history });
+  } catch (err) {
+    console.warn("Failed to save history:", err);
+  }
+}
 
 // Primary Google Translate endpoint (Public gtx client - Zero Config, No API key)
 async function translateWithGoogleGtx(text, sourceLang = "auto", targetLang = "vi") {
@@ -87,8 +121,8 @@ async function translateWithGoogleGtx(text, sourceLang = "auto", targetLang = "v
   const dict = [];
   if (Array.isArray(data[1])) {
     for (const posGroup of data[1]) {
-      const posName = posGroup[0]; // e.g. "noun", "verb"
-      const terms = Array.isArray(posGroup[1]) ? posGroup[1].slice(0, 5) : [];
+      const posName = posGroup[0]; // e.g. "noun", "verb", "adjective"
+      const terms = Array.isArray(posGroup[1]) ? posGroup[1].slice(0, 6) : [];
       if (posName && terms.length > 0) {
         dict.push({ pos: posName, terms });
       }
@@ -158,51 +192,110 @@ async function translateWithMyMemory(text, sourceLang = "auto", targetLang = "vi
       sourceLang: sl,
       targetLang,
       dict: [],
-      engine: "mymemory-fallback"
+      engine: "mymemory"
     };
   }
-  throw new Error("MyMemory translation empty");
+  throw new Error("MyMemory translation returned empty");
 }
 
-// Master Translation Coordinator with robust fallback
-async function handleTranslation(text, sourceLang = "auto", targetLang = "vi") {
-  if (!text || !text.trim()) {
-    throw new Error("Văn bản cần dịch rỗng");
-  }
+// Master translation router with automatic fallback
+async function executeTranslate(text, sourceLang = "auto", targetLang = "vi") {
+  let lastError = null;
 
-  const cleanText = text.trim();
-
-  // Try Primary Google GTX
+  // 1. Primary: Google GTX
   try {
-    return await translateWithGoogleGtx(cleanText, sourceLang, targetLang);
-  } catch (err1) {
-    console.warn("Primary Google GTX failed, trying fallback 1:", err1.message);
-    try {
-      return await translateWithGoogleFallback(cleanText, sourceLang, targetLang);
-    } catch (err2) {
-      console.warn("Fallback 1 failed, trying fallback 2 (MyMemory):", err2.message);
-      try {
-        return await translateWithMyMemory(cleanText, sourceLang, targetLang);
-      } catch (err3) {
-        console.error("All translation engines failed:", err3.message);
-        throw new Error("Không thể kết nối đến máy chủ dịch thuật. Vui lòng kiểm tra lại kết nối mạng!");
-      }
+    const res = await translateWithGoogleGtx(text, sourceLang, targetLang);
+    if (res.translatedText) {
+      saveToHistory({
+        originalText: text,
+        translatedText: res.translatedText,
+        sourceLang: res.sourceLang,
+        targetLang: res.targetLang
+      });
+      return res;
     }
+  } catch (err) {
+    lastError = err;
+    console.warn("Google GTX translation failed, trying fallback 1:", err.message);
   }
+
+  // 2. Fallback 1: Google Dict Client
+  try {
+    const res = await translateWithGoogleFallback(text, sourceLang, targetLang);
+    if (res.translatedText) {
+      saveToHistory({
+        originalText: text,
+        translatedText: res.translatedText,
+        sourceLang: res.sourceLang,
+        targetLang: res.targetLang
+      });
+      return res;
+    }
+  } catch (err) {
+    lastError = err;
+    console.warn("Google fallback 1 failed, trying fallback 2:", err.message);
+  }
+
+  // 3. Fallback 2: MyMemory
+  try {
+    const res = await translateWithMyMemory(text, sourceLang, targetLang);
+    if (res.translatedText) {
+      saveToHistory({
+        originalText: text,
+        translatedText: res.translatedText,
+        sourceLang: res.sourceLang,
+        targetLang: res.targetLang
+      });
+      return res;
+    }
+  } catch (err) {
+    lastError = err;
+    console.warn("MyMemory fallback 2 failed:", err.message);
+  }
+
+  throw new Error(lastError ? lastError.message : "Tất cả các nguồn dịch đều không phản hồi.");
 }
 
-// Handle runtime messages
+// Runtime message listener for content script & popup
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "TRANSLATE") {
-    handleTranslation(request.text, request.sourceLang || "auto", request.targetLang || "vi")
-      .then((result) => sendResponse({ success: true, data: result }))
-      .catch((error) => sendResponse({ success: false, error: error.message }));
-    return true; // Keep message channel open for async response
+    const { text, sourceLang, targetLang } = request;
+    if (!text || !text.trim()) {
+      sendResponse({ success: false, error: "Văn bản rỗng" });
+      return false;
+    }
+
+    executeTranslate(text.trim(), sourceLang || "auto", targetLang || "vi")
+      .then((data) => {
+        sendResponse({ success: true, data });
+      })
+      .catch((err) => {
+        sendResponse({ success: false, error: err.message || "Lỗi dịch thuật" });
+      });
+
+    return true; // Keep message port open for async response
   }
 
-  if (request.action === "GET_SETTINGS") {
-    chrome.storage.local.get("settings").then((res) => {
-      sendResponse({ settings: res.settings || DEFAULT_SETTINGS });
+  if (request.action === "GET_HISTORY") {
+    chrome.storage.local.get("history", (res) => {
+      sendResponse({ success: true, history: res.history || [] });
+    });
+    return true;
+  }
+
+  if (request.action === "CLEAR_HISTORY") {
+    chrome.storage.local.set({ history: [] }, () => {
+      sendResponse({ success: true });
+    });
+    return true;
+  }
+
+  if (request.action === "DELETE_HISTORY_ITEM") {
+    chrome.storage.local.get("history", (res) => {
+      const updated = (res.history || []).filter(h => h.id !== request.id);
+      chrome.storage.local.set({ history: updated }, () => {
+        sendResponse({ success: true, history: updated });
+      });
     });
     return true;
   }

@@ -2,8 +2,8 @@
   "manifest_version": 3,
   "name": "InstantTranslate - Dịch Chuột Nhanh & Miễn Phí",
   "short_name": "InstantTranslate",
-  "version": "1.0.0",
-  "description": "Dịch văn bản bôi đen tức thì, 100% miễn phí, không cần API Key. Hỗ trợ phát âm, từ điển tra từ và giao diện Shadow DOM mượt mà.",
+  "version": "1.1.0",
+  "description": "Dịch văn bản bôi đen tức thì, 100% miễn phí, không cần API Key. Hỗ trợ thay thế chữ gốc (Ctrl+Enter), đảo chiều ngôn ngữ, phát âm, từ điển và lịch sử dịch.",
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
