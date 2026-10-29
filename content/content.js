@@ -1,29 +1,69 @@
 /**
- * InstantTranslate - Content Script (V4 - Tối Ưu Trải Nghiệm & Căn Chỉnh Khung Hình)
- * Khắc phục triệt để lỗi tràn màn hình (bị ẩn khúc dưới), chữ quá đậm thô, và tối ưu hiển thị đoạn văn dài.
- * Phong cách Cốc Cốc / Laban / Zalo tinh tế, thanh thoát, dễ đọc.
+ * InstantTranslate - Content Script (V5 - Cờ Quốc Gia SVG Chuẩn Xác 100%)
+ * Sử dụng cờ SVG màu sắc thực tế thay vì ký tự emoji (khắc phục triệt để lỗi Windows biến cờ thành chữ 'us' và 'vn').
+ * Định dạng chuẩn: [Cờ SVG] + Tên ngôn ngữ (Hoàn toàn không có chữ 'us' hay 'vn').
  */
 
 (function () {
   if (window.__instantTranslateLoaded) return;
   window.__instantTranslateLoaded = true;
 
-  // Bản đồ ngôn ngữ
-  const LANG_DATA = {
-    vi: { name: "Tiếng Việt", short: "Việt", flag: "🇻🇳", tts: "vi-VN" },
-    en: { name: "Tiếng Anh", short: "Anh", flag: "🇺🇸", tts: "en-US" },
-    "zh-CN": { name: "Tiếng Trung (Giản)", short: "Trung", flag: "🇨🇳", tts: "zh-CN" },
-    "zh-TW": { name: "Tiếng Trung (Phồn)", short: "Đài Loan", flag: "🇹🇼", tts: "zh-TW" },
-    ja: { name: "Tiếng Nhật", short: "Nhật", flag: "🇯🇵", tts: "ja-JP" },
-    ko: { name: "Tiếng Hàn", short: "Hàn", flag: "🇰🇷", tts: "ko-KR" },
-    fr: { name: "Tiếng Pháp", short: "Pháp", flag: "🇫🇷", tts: "fr-FR" },
-    de: { name: "Tiếng Đức", short: "Đức", flag: "🇩🇪", tts: "de-DE" },
-    es: { name: "Tây Ban Nha", short: "TBN", flag: "🇪🇸", tts: "es-ES" },
-    ru: { name: "Tiếng Nga", short: "Nga", flag: "🇷🇺", tts: "ru-RU" },
-    th: { name: "Tiếng Thái", short: "Thái", flag: "🇹🇭", tts: "th-TH" },
-    it: { name: "Tiếng Ý", short: "Ý", flag: "🇮🇹", tts: "it-IT" },
-    auto: { name: "Tự động phát hiện", short: "Tự động", flag: "🌐", tts: "en-US" }
+  // Thư viện CỜ SVG CHUẨN (Hiển thị sắc nét trên Windows 10/11, không bao giờ bị biến thành chữ US/VN)
+  const SVG_FLAGS = {
+    vi: `<svg class="vn-flag-svg" viewBox="0 0 30 20"><rect width="30" height="20" rx="2.5" fill="#da251d"/><polygon fill="#ffff00" points="15,4 16.5,8.5 21,8.5 17.5,11.2 18.8,15.5 15,12.8 11.2,15.5 12.5,11.2 9,8.5 13.5,8.5"/></svg>`,
+    en: `<svg class="vn-flag-svg" viewBox="0 0 30 20"><rect width="30" height="20" rx="2.5" fill="#b22234"/><path d="M0 3.1h30v1.5H0zm0 3.1h30v1.5H0zm0 3.1h30v1.5H0zm0 3.1h30v1.5H0zm0 3.1h30v1.5H0zm0 3.1h30v1.5H0z" fill="#ffffff"/><rect width="13" height="10.8" rx="2" fill="#3c3b6e"/><circle cx="6.5" cy="5.4" r="2.8" fill="#ffffff"/></svg>`,
+    "zh-CN": `<svg class="vn-flag-svg" viewBox="0 0 30 20"><rect width="30" height="20" rx="2.5" fill="#de2910"/><polygon fill="#ffde00" points="5,3 6,6 9,6 6.5,8 7.5,11 5,9 2.5,11 3.5,8 1,6 4,6"/></svg>`,
+    "zh-TW": `<svg class="vn-flag-svg" viewBox="0 0 30 20"><rect width="30" height="20" rx="2.5" fill="#fe0000"/><rect width="14" height="10" rx="2" fill="#000095"/><circle cx="7" cy="5" r="2.8" fill="#ffffff"/></svg>`,
+    ja: `<svg class="vn-flag-svg" viewBox="0 0 30 20"><rect width="30" height="20" rx="2.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/><circle cx="15" cy="10" r="5.5" fill="#bc002d"/></svg>`,
+    ko: `<svg class="vn-flag-svg" viewBox="0 0 30 20"><rect width="30" height="20" rx="2.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/><circle cx="15" cy="10" r="5" fill="#cd2e3a"/><path d="M10 10a5 5 0 0 0 10 0 2.5 2.5 0 0 1-5 0 2.5 2.5 0 0 0-5 0z" fill="#0047a0"/></svg>`,
+    fr: `<svg class="vn-flag-svg" viewBox="0 0 30 20"><rect width="10" height="20" rx="2.5" fill="#002395"/><rect x="10" width="10" height="20" fill="#ffffff"/><rect x="20" width="10" height="20" rx="2.5" fill="#ed2939"/></svg>`,
+    de: `<svg class="vn-flag-svg" viewBox="0 0 30 20"><rect width="30" height="6.7" rx="2.5" fill="#000000"/><rect y="6.7" width="30" height="6.6" fill="#dd0000"/><rect y="13.3" width="30" height="6.7" rx="2.5" fill="#ffce00"/></svg>`,
+    es: `<svg class="vn-flag-svg" viewBox="0 0 30 20"><rect width="30" height="20" rx="2.5" fill="#aa151b"/><rect y="5" width="30" height="10" fill="#f1bf00"/></svg>`,
+    ru: `<svg class="vn-flag-svg" viewBox="0 0 30 20"><rect width="30" height="6.7" rx="2.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.6"/><rect y="6.7" width="30" height="6.6" fill="#0039a6"/><rect y="13.3" width="30" height="6.7" rx="2.5" fill="#d52b1e"/></svg>`,
+    th: `<svg class="vn-flag-svg" viewBox="0 0 30 20"><rect width="30" height="20" rx="2.5" fill="#a51931"/><rect y="3.3" width="30" height="13.4" fill="#ffffff"/><rect y="6.7" width="30" height="6.6" fill="#2d2a4a"/></svg>`,
+    it: `<svg class="vn-flag-svg" viewBox="0 0 30 20"><rect width="10" height="20" rx="2.5" fill="#009246"/><rect x="10" width="10" height="20" fill="#ffffff"/><rect x="20" width="10" height="20" rx="2.5" fill="#ce2b37"/></svg>`,
+    auto: `<svg class="vn-flag-svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#0284c7"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10zM2 12h20M4.93 6.93h14.14M4.93 17.07h14.14" stroke="#ffffff" stroke-width="1.6" fill="none"/></svg>`
   };
+
+  // Danh mục tên ngôn ngữ thuần Việt
+  const LANG_NAMES = {
+    vi: "Tiếng Việt",
+    en: "Tiếng Anh",
+    "zh-CN": "Tiếng Trung (Giản)",
+    "zh-TW": "Tiếng Trung (Phồn)",
+    ja: "Tiếng Nhật",
+    ko: "Tiếng Hàn",
+    fr: "Tiếng Pháp",
+    de: "Tiếng Đức",
+    es: "Tiếng Tây Ban Nha",
+    ru: "Tiếng Nga",
+    th: "Tiếng Thái",
+    it: "Tiếng Ý",
+    auto: "Tự động phát hiện"
+  };
+
+  const TTS_VOICES = {
+    vi: "vi-VN",
+    en: "en-US",
+    "zh-CN": "zh-CN",
+    "zh-TW": "zh-TW",
+    ja: "ja-JP",
+    ko: "ko-KR",
+    fr: "fr-FR",
+    de: "de-DE",
+    es: "es-ES",
+    ru: "ru-RU",
+    th: "th-TH",
+    it: "it-IT"
+  };
+
+  function getFlagSvg(code) {
+    return SVG_FLAGS[code] || SVG_FLAGS["auto"];
+  }
+
+  function getLangName(code) {
+    return LANG_NAMES[code] || code.toUpperCase();
+  }
 
   // Cấu hình
   let settings = {
@@ -102,6 +142,18 @@
       user-select: none;
     }
 
+    /* CỜ QUỐC GIA SVG THẬT (SẮC NÉT TRÊN WINDOWS) */
+    .vn-flag-svg {
+      width: 19px;
+      height: 13px;
+      border-radius: 2.5px;
+      display: inline-block;
+      vertical-align: middle;
+      flex-shrink: 0;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.22);
+      overflow: hidden;
+    }
+
     /* Nút trigger icon tròn */
     .vn-trigger-btn {
       width: 32px;
@@ -129,11 +181,11 @@
       fill: #ffffff;
     }
 
-    /* KHUNG THẺ DỊCH CHÍNH (KHÔNG BAO GIỜ TRÀN MÀN HÌNH) */
+    /* KHUNG THẺ DỊCH CHÍNH */
     .vn-card {
       position: absolute;
-      width: 480px;
-      min-width: 320px;
+      width: 490px;
+      min-width: 330px;
       max-width: 92vw;
       border-radius: 14px;
       background: #ffffff;
@@ -212,16 +264,16 @@
       }
     }
 
-    /* Thanh cờ ngôn ngữ */
+    /* Thanh cờ ngôn ngữ (CỜ SVG + TÊN NGÔN NGỮ) */
     .vn-lang-badge {
       display: flex;
       align-items: center;
-      gap: 5px;
-      padding: 3px 9px;
+      gap: 6px;
+      padding: 3px 10px;
       border-radius: 20px;
       background: #ffffff;
       border: 1px solid #c7d8ee;
-      font-size: 11px;
+      font-size: 11.5px;
       font-weight: 600;
       color: #1e3a8a;
     }
@@ -232,6 +284,12 @@
         border-color: #3b4763;
         color: #93c5fd;
       }
+    }
+
+    .vn-lang-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
     }
 
     .vn-swap-icon {
@@ -321,7 +379,7 @@
       fill: currentColor;
     }
 
-    /* THÂN HỘP DỊCH (TỰ ĐỘNG SCROLL, KHÔNG BAO GIỜ BỊ TRÀN) */
+    /* THÂN HỘP DỊCH */
     .vn-body {
       padding: 12px 16px;
       display: flex;
@@ -346,7 +404,7 @@
       }
     }
 
-    /* 1. KHỐI BẢN DỊCH CHÍNH (ĐẸP, DỄ ĐỌC, CÂN ĐỐI) */
+    /* KHỐI BẢN DỊCH */
     .vn-result-box {
       display: flex;
       flex-direction: column;
@@ -360,14 +418,12 @@
     }
 
     .vn-result-tag {
-      font-size: 11px;
-      font-weight: 800;
+      font-size: 11.5px;
+      font-weight: 700;
       color: #0068ff;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      display: flex;
+      display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: 6px;
     }
 
     @media (prefers-color-scheme: dark) {
@@ -376,10 +432,9 @@
       }
     }
 
-    /* Typography bản dịch: Rõ ràng, thoáng đãng, dễ đọc, không bị thô */
     .vn-result-text {
       font-size: 15px;
-      font-weight: 500;
+      font-weight: 450;
       line-height: 1.65;
       color: #0f172a;
       word-break: break-word;
@@ -414,7 +469,7 @@
       }
     }
 
-    /* 2. KHỐI VĂN BẢN GỐC (DẠNG THU GỌN / ACCORDION ĐỂ KHÔNG CHIẾM DIỆN TÍCH) */
+    /* VĂN BẢN GỐC THU GỌN ACCORDION */
     .vn-source-accordion {
       border: 1px solid #e2e8f0;
       border-radius: 8px;
@@ -472,7 +527,7 @@
       }
     }
 
-    /* 3. TỪ ĐIỂN TỪ LOẠI (Cho từ đơn) */
+    /* TỪ ĐIỂN TỪ LOẠI */
     .vn-dict-group {
       display: flex;
       flex-direction: column;
@@ -556,7 +611,7 @@
       }
     }
 
-    /* FOOTER THAO TÁC LUÔN NẰM CỐ ĐỊNH Ở ĐÁY KHUNG (KHÔNG BAO GIỜ BỊ ẨN) */
+    /* FOOTER THAO TÁC CỐ ĐỊNH */
     .vn-footer {
       display: flex;
       align-items: center;
@@ -575,13 +630,29 @@
       }
     }
 
+    .vn-select-box {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 7px;
+      padding: 2px 6px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .vn-select-box {
+        background: #242c3d;
+        border-color: #3a4659;
+      }
+    }
+
     .vn-select-lang {
       font-size: 11.5px;
       font-weight: 600;
-      padding: 4px 7px;
-      border-radius: 6px;
-      border: 1px solid #cbd5e1;
-      background: #ffffff;
+      padding: 3px 2px;
+      border: none;
+      background: transparent;
       color: #1e293b;
       cursor: pointer;
       outline: none;
@@ -589,8 +660,6 @@
 
     @media (prefers-color-scheme: dark) {
       .vn-select-lang {
-        background: #242c3d;
-        border-color: #3a4659;
         color: #f1f5f9;
       }
     }
@@ -700,15 +769,14 @@
     close: `<svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>`,
     swap: `<svg viewBox="0 0 24 24"><path d="M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"/></svg>`,
     replace: `<svg viewBox="0 0 24 24"><path d="M19 8l-4 4h3c0 3.31-2.69 6-6 6-1.01 0-1.97-.25-2.8-.7l-1.46 1.46C8.97 19.54 10.43 20 12 20c4.42 0 8-3.58 8-8h3l-4-4zM6 12c0-3.31 2.69-6 6-6 1.01 0 1.97.25 2.8.7l1.46-1.46C15.03 4.46 13.57 4 12 4c-4.42 0-8 3.58-8 8H1l4 4 4-4H6z"/></svg>`,
-    external: `<svg viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>`,
-    arrowDown: `<svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>`
+    external: `<svg viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>`
   };
 
   function speak(text, lang) {
     if (!text || !("speechSynthesis" in window)) return;
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
-    u.lang = LANG_DATA[lang]?.tts || lang || "vi-VN";
+    u.lang = TTS_VOICES[lang] || lang || "vi-VN";
     u.rate = 0.95;
     window.speechSynthesis.speak(u);
   }
@@ -719,7 +787,7 @@
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
   }
 
-  // THUẬT TOÁN ĐỊNH VỊ THÔNG MINH - ĐẢM BẢO 100% NẰM TRỌN TRONG MÀN HÌNH
+  // ĐỊNH VỊ THÔNG MINH - KHÔNG BAO GIỜ BỊ ẨN KHÚC DƯỚI
   function position(elem, rect) {
     container.style.display = "block";
     container.style.visibility = "hidden";
@@ -730,19 +798,17 @@
       const scrollX = window.scrollX;
       const scrollY = window.scrollY;
 
-      // Chiều rộng thích ứng: văn bản dài mở rộng ra để dễ đọc (tối đa 540px)
       const isLongText = (activeSelectionText || "").length > 80;
       const targetWidth = isLongText ? Math.min(540, viewportW - 32) : Math.min(420, viewportW - 32);
       elem.style.width = `${targetWidth}px`;
 
-      // Giới hạn chiều cao tối đa của card không vượt quá 85% chiều cao màn hình
       const maxAllowedH = Math.min(viewportH - 32, 480);
       elem.style.maxHeight = `${maxAllowedH}px`;
 
       const elemW = elem.offsetWidth || targetWidth;
       const elemH = elem.offsetHeight || 300;
 
-      // Căn chỉnh trục ngang (Horizontal)
+      // Căn chỉnh trục ngang
       let left = rect.left + scrollX;
       if (left + elemW > scrollX + viewportW - 16) {
         left = scrollX + viewportW - elemW - 16;
@@ -751,24 +817,20 @@
         left = scrollX + 16;
       }
 
-      // Căn chỉnh trục dọc (Vertical): Tính toán khoảng trống bên dưới và bên trên
+      // Căn chỉnh trục dọc
       const spaceBelow = viewportH - rect.bottom;
       const spaceAbove = rect.top;
 
       let top = rect.bottom + 8 + scrollY;
 
-      // Nếu không đủ chỗ bên dưới
       if (spaceBelow < elemH + 16) {
         if (spaceAbove >= elemH + 16 || spaceAbove > spaceBelow) {
-          // Lật lên trên vùng bôi đen
           top = rect.top + scrollY - elemH - 8;
         } else {
-          // Nếu cả 2 phía đều chật, ghim sát đáy màn hình (cách mép 14px)
           top = scrollY + viewportH - elemH - 14;
         }
       }
 
-      // Đảm bảo không bị tràn lên mép trên
       if (top < scrollY + 12) {
         top = scrollY + 12;
       }
@@ -840,30 +902,39 @@
     return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
 
-  // RENDER CARD
+  // RENDER CARD VỚI CỜ SVG THẬT (KHÔNG CÓ US/VN)
   function render(text, rect, targetLangOverride) {
     const curTarget = targetLangOverride || settings.targetLang || "vi";
-    const src = LANG_DATA[currentDetectedSourceLang] || { flag: "🌐", short: currentDetectedSourceLang };
-    const trg = LANG_DATA[curTarget] || { flag: "🇻🇳", short: "Việt" };
+    const srcFlag = getFlagSvg(currentDetectedSourceLang);
+    const srcName = getLangName(currentDetectedSourceLang);
+    const trgFlag = getFlagSvg(curTarget);
+    const trgName = getLangName(curTarget);
 
     const wordCount = text.split(/\s+/).filter(Boolean).length;
     const isLongParagraph = text.length > 70;
 
     container.innerHTML = `
       <div class="vn-card">
-        <!-- 1. Header (Cố định ở trên) -->
+        <!-- 1. Header (CỜ SVG + TÊN NGÔN NGỮ) -->
         <div class="vn-header">
           <div class="vn-header-left">
             <div class="vn-app-icon">${ICONS.book}</div>
             <span class="vn-header-title">Dịch Tiếng Việt</span>
           </div>
 
+          <!-- Thanh ngôn ngữ: Cờ SVG + Tên nước -->
           <div class="vn-lang-badge">
-            <span>${src.flag} ${src.short}</span>
+            <span class="vn-lang-item" id="vn-src-lang-label">
+              ${srcFlag}
+              <span>${srcName}</span>
+            </span>
             <button class="vn-swap-icon" id="vn-swap-btn" title="Đổi chiều ngôn ngữ">
               ${ICONS.swap}
             </button>
-            <span>${trg.flag} ${trg.short}</span>
+            <span class="vn-lang-item" id="vn-trg-lang-label">
+              ${trgFlag}
+              <span>${trgName}</span>
+            </span>
           </div>
 
           <div class="vn-header-btns">
@@ -876,12 +947,15 @@
           </div>
         </div>
 
-        <!-- 2. Body (Cuộn nội dung độc lập) -->
+        <!-- 2. Thân nội dung -->
         <div class="vn-body">
-          <!-- BẢN DỊCH CHÍNH (ĐẦU TIÊN & NỔI BẬT NHẤT) -->
+          <!-- BẢN DỊCH CHÍNH (CỜ SVG + BẢN DỊCH TIẾNG ...) -->
           <div class="vn-result-box">
             <div class="vn-result-header">
-              <span class="vn-result-tag">BẢN DỊCH TIẾNG ${trg.short.toUpperCase()}</span>
+              <span class="vn-result-tag" id="vn-result-title-tag">
+                ${trgFlag}
+                <span>Bản dịch ${trgName}</span>
+              </span>
               <button class="vn-tool-btn" id="vn-tts-res" title="Phát âm bản dịch" style="display:none;">
                 ${ICONS.speaker}
               </button>
@@ -893,7 +967,7 @@
             <div id="vn-ipa-container" style="display:none;"></div>
           </div>
 
-          <!-- VĂN BẢN GỐC (Dạng Accordion xếp gọn gàng để không chiếm chỗ bản dịch) -->
+          <!-- VĂN BẢN GỐC (Thu gọn dạng Accordion) -->
           <div class="vn-source-accordion">
             <div class="vn-source-toggle" id="vn-src-toggle">
               <span>📄 Văn bản gốc (${wordCount} từ)</span>
@@ -909,20 +983,29 @@
             </div>
           </div>
 
-          <!-- TỪ ĐIỂN TỪ LOẠI (Cho từ đơn) -->
+          <!-- TỪ ĐIỂN TỪ LOẠI -->
           <div id="vn-dict-container" style="display:none;"></div>
         </div>
 
-        <!-- 3. Footer Thao Tác (LUÔN CỐ ĐỊNH Ở ĐÁY, KHÔNG BAO GIỜ BỊ ẨN) -->
+        <!-- 3. Footer Cố Định -->
         <div class="vn-footer">
-          <select class="vn-select-lang" id="vn-lang-select">
-            <option value="vi" ${curTarget === "vi" ? "selected" : ""}>🇻🇳 Tiếng Việt</option>
-            <option value="en" ${curTarget === "en" ? "selected" : ""}>🇺🇸 Tiếng Anh</option>
-            <option value="zh-CN" ${curTarget === "zh-CN" ? "selected" : ""}>🇨🇳 Tiếng Trung</option>
-            <option value="ja" ${curTarget === "ja" ? "selected" : ""}>🇯🇵 Tiếng Nhật</option>
-            <option value="ko" ${curTarget === "ko" ? "selected" : ""}>🇰🇷 Tiếng Hàn</option>
-            <option value="fr" ${curTarget === "fr" ? "selected" : ""}>🇫🇷 Tiếng Pháp</option>
-          </select>
+          <div class="vn-select-box">
+            <span id="vn-footer-flag">${trgFlag}</span>
+            <select class="vn-select-lang" id="vn-lang-select">
+              <option value="vi" ${curTarget === "vi" ? "selected" : ""}>Tiếng Việt</option>
+              <option value="en" ${curTarget === "en" ? "selected" : ""}>Tiếng Anh</option>
+              <option value="zh-CN" ${curTarget === "zh-CN" ? "selected" : ""}>Tiếng Trung (Giản)</option>
+              <option value="zh-TW" ${curTarget === "zh-TW" ? "selected" : ""}>Tiếng Trung (Phồn)</option>
+              <option value="ja" ${curTarget === "ja" ? "selected" : ""}>Tiếng Nhật</option>
+              <option value="ko" ${curTarget === "ko" ? "selected" : ""}>Tiếng Hàn</option>
+              <option value="fr" ${curTarget === "fr" ? "selected" : ""}>Tiếng Pháp</option>
+              <option value="de" ${curTarget === "de" ? "selected" : ""}>Tiếng Đức</option>
+              <option value="es" ${curTarget === "es" ? "selected" : ""}>Tây Ban Nha</option>
+              <option value="ru" ${curTarget === "ru" ? "selected" : ""}>Tiếng Nga</option>
+              <option value="th" ${curTarget === "th" ? "selected" : ""}>Tiếng Thái</option>
+              <option value="it" ${curTarget === "it" ? "selected" : ""}>Tiếng Ý</option>
+            </select>
+          </div>
 
           <div class="vn-actions-right">
             <button class="vn-btn" id="vn-replace-btn" title="Thay thế chữ đang chọn trên web (Ctrl+Enter)">
@@ -944,7 +1027,7 @@
     const card = container.querySelector(".vn-card");
     position(card, rect);
 
-    // Toggle Accordion văn bản gốc
+    // Accordion Toggle
     const srcToggle = container.querySelector("#vn-src-toggle");
     const srcContent = container.querySelector("#vn-src-content");
     const srcArrow = container.querySelector("#vn-src-arrow");
@@ -1009,7 +1092,7 @@
     return curTarget;
   }
 
-  // GỌI API DỊCH
+  // GỌI DỊCH
   function translate(text, rect, targetLangOverride) {
     const curTarget = targetLangOverride || settings.targetLang || "vi";
     render(text, rect, curTarget);
@@ -1030,6 +1113,7 @@
         const ttsRes = container.querySelector("#vn-tts-res");
         const ipaContainer = container.querySelector("#vn-ipa-container");
         const dictContainer = container.querySelector("#vn-dict-container");
+        const srcLangLabel = container.querySelector("#vn-src-lang-label");
 
         if (!resContent) return;
 
@@ -1038,7 +1122,15 @@
           container.dataset.translatedText = d.translatedText;
           currentDetectedSourceLang = d.sourceLang || "en";
 
-          // Hiển thị bản dịch với font chữ thanh thoát, dễ đọc
+          // Cập nhật Cờ SVG & Tên ngôn ngữ nguồn đã nhận diện
+          if (srcLangLabel) {
+            srcLangLabel.innerHTML = `
+              ${getFlagSvg(currentDetectedSourceLang)}
+              <span>${getLangName(currentDetectedSourceLang)}</span>
+            `;
+          }
+
+          // Hiển thị bản dịch
           resContent.innerHTML = `<div class="vn-result-text">${escapeHtml(d.translatedText)}</div>`;
           if (ttsRes) ttsRes.style.display = "flex";
 
@@ -1048,7 +1140,7 @@
             ipaContainer.innerHTML = `<div class="vn-ipa-wrap">🔊 [${escapeHtml(d.transliteration)}]</div>`;
           }
 
-          // Tra từ loại (chỉ khi có từ điển)
+          // Tra từ loại nếu có
           if (settings.showDict && d.dict && d.dict.length > 0 && dictContainer) {
             let dictHtml = `
               <div class="vn-dict-group">
@@ -1091,7 +1183,6 @@
             speak(d.translatedText, d.targetLang);
           }
 
-          // Căn chỉnh lại vị trí để đảm bảo luôn nhìn thấy trọn vẹn
           const card = container.querySelector(".vn-card");
           if (card) position(card, rect);
         } else {
@@ -1101,7 +1192,7 @@
     );
   }
 
-  // Bắt sự kiện bôi đen chuột
+  // Bắt bôi đen chuột
   function onSelect(event) {
     if (!settings.enabled) return;
 
