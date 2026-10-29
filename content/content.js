@@ -135,6 +135,12 @@
       all: initial;
     }
 
+    @media (prefers-color-scheme: dark) {
+      :host {
+        color-scheme: dark;
+      }
+    }
+
     .vn-wrapper {
       position: absolute;
       pointer-events: auto;
@@ -656,10 +662,22 @@
       color: #1e293b;
       cursor: pointer;
       outline: none;
+      color-scheme: light;
+    }
+
+    .vn-select-lang option {
+      background-color: #ffffff;
+      color: #0f172a;
     }
 
     @media (prefers-color-scheme: dark) {
       .vn-select-lang {
+        color: #f1f5f9;
+        color-scheme: dark;
+      }
+
+      .vn-select-lang option {
+        background-color: #1e2533;
         color: #f1f5f9;
       }
     }

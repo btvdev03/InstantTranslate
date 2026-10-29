@@ -23,6 +23,7 @@
     --text-main: #f8fafc;
     --text-muted: #94a3b8;
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+    color-scheme: dark;
   }
 }
 
@@ -239,6 +240,12 @@ input:checked + .toggle-slider:before {
   font-weight: 600;
   outline: none;
   cursor: pointer;
+  color-scheme: light dark;
+}
+
+.custom-select option {
+  background-color: var(--bg-card);
+  color: var(--text-main);
 }
 
 .custom-select:focus {
