@@ -1,6 +1,7 @@
 /**
- * InstantTranslate - Content Script (V2 - Ultra Premium Edition)
- * Isolated via Closed Shadow DOM to ensure 100% immune from host page CSS.
+ * InstantTranslate - Content Script (V3 - Boutique Masterpiece Edition)
+ * Inspired by Raycast, Arc Browser & macOS design languages.
+ * Isolated via Closed Shadow DOM for zero-conflict rendering.
  */
 
 (function () {
@@ -21,7 +22,7 @@
     ru: { name: "Tiếng Nga", flag: "🇷🇺", tts: "ru-RU" },
     th: { name: "Tiếng Thái", flag: "🇹🇭", tts: "th-TH" },
     it: { name: "Tiếng Ý", flag: "🇮🇹", tts: "it-IT" },
-    auto: { name: "Tự động nhận diện", flag: "🌐", tts: "en-US" }
+    auto: { name: "Tự động phát hiện", flag: "🌐", tts: "en-US" }
   };
 
   // State
@@ -44,7 +45,6 @@
   let activeSelectionText = "";
   let currentDetectedSourceLang = "en";
   let activeTranslateRequest = 0;
-  let isSpeaking = false;
 
   // Load and listen for settings
   function refreshSettings() {
@@ -81,14 +81,14 @@
   // Attach Closed Shadow DOM
   const shadow = host.attachShadow({ mode: "closed" });
 
-  // Inject Styles into Shadow DOM
+  // Inject High-End Styles
   const styleEl = document.createElement("style");
   styleEl.textContent = `
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", "Helvetica Neue", Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, "Inter", sans-serif;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
@@ -104,63 +104,65 @@
       user-select: none;
     }
 
-    /* Floating Trigger Button */
+    /* Floating Trigger Button (Gleaming Gemstone style) */
     .it-trigger-btn {
-      width: 32px;
-      height: 32px;
-      border-radius: 10px;
+      width: 34px;
+      height: 34px;
+      border-radius: 11px;
       background: linear-gradient(135deg, #6366f1 0%, #3b82f6 50%, #06b6d4 100%);
-      box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4), 0 2px 4px rgba(0,0,0,0.1);
-      border: 1.5px solid rgba(255, 255, 255, 0.9);
+      box-shadow: 0 4px 18px rgba(99, 102, 241, 0.45), 0 2px 6px rgba(0, 0, 0, 0.15);
+      border: 1.5px solid rgba(255, 255, 255, 0.95);
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
-      animation: itFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.22s ease;
+      animation: itScaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .it-trigger-btn:hover {
-      transform: scale(1.16) translateY(-2px);
-      box-shadow: 0 8px 22px rgba(99, 102, 241, 0.55);
+      transform: scale(1.18) translateY(-2px);
+      box-shadow: 0 8px 26px rgba(99, 102, 241, 0.6);
     }
 
     .it-trigger-btn svg {
       width: 17px;
       height: 17px;
       fill: #ffffff;
+      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2));
     }
 
-    /* Popover Card - Modern Glassmorphism */
+    /* Master Popover Card - Boutique Frosted Glass */
     .it-popover {
       position: absolute;
-      width: 380px;
-      min-width: 300px;
-      max-width: 92vw;
-      border-radius: 16px;
-      background: rgba(255, 255, 255, 0.96);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
+      width: 400px;
+      min-width: 320px;
+      max-width: 94vw;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(28px) saturate(190%);
+      -webkit-backdrop-filter: blur(28px) saturate(190%);
       color: #0f172a;
       box-shadow: 
-        0 20px 48px -8px rgba(0, 0, 0, 0.18),
-        0 8px 20px -4px rgba(0, 0, 0, 0.08),
+        0 28px 64px -12px rgba(15, 23, 42, 0.22),
+        0 10px 24px -4px rgba(15, 23, 42, 0.08),
         0 0 0 1px rgba(226, 232, 240, 0.85);
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      animation: itPopIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-      transition: box-shadow 0.2s ease;
+      animation: itSpringIn 0.26s cubic-bezier(0.175, 0.885, 0.32, 1.15);
+      transition: box-shadow 0.2s ease, transform 0.2s ease;
     }
 
     @media (prefers-color-scheme: dark) {
       .it-popover {
-        background: rgba(18, 22, 34, 0.96);
+        background: rgba(15, 18, 30, 0.92);
         color: #f8fafc;
         box-shadow: 
-          0 24px 56px -8px rgba(0, 0, 0, 0.65),
-          0 8px 24px -4px rgba(0, 0, 0, 0.4),
-          0 0 0 1px rgba(255, 255, 255, 0.1);
+          0 32px 72px -12px rgba(0, 0, 0, 0.75),
+          0 12px 30px -4px rgba(0, 0, 0, 0.45),
+          0 0 0 1px rgba(255, 255, 255, 0.12),
+          inset 0 1px 0 rgba(255, 255, 255, 0.08);
       }
     }
 
@@ -169,92 +171,107 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 10px 14px;
-      background: linear-gradient(180deg, rgba(248, 250, 252, 0.95) 0%, rgba(241, 245, 249, 0.8) 100%);
-      border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-      gap: 8px;
+      padding: 12px 16px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.8) 0%, rgba(248, 250, 252, 0.5) 100%);
+      border-bottom: 1px solid rgba(226, 232, 240, 0.7);
+      gap: 10px;
     }
 
     @media (prefers-color-scheme: dark) {
       .it-header {
-        background: linear-gradient(180deg, rgba(28, 33, 48, 0.95) 0%, rgba(22, 26, 40, 0.9) 100%);
-        border-color: rgba(255, 255, 255, 0.08);
+        background: linear-gradient(180deg, rgba(26, 31, 48, 0.8) 0%, rgba(18, 22, 36, 0.6) 100%);
+        border-color: rgba(255, 255, 255, 0.07);
       }
     }
 
     .it-brand {
       display: flex;
       align-items: center;
-      gap: 7px;
-      font-size: 13px;
-      font-weight: 700;
-      color: #4338ca;
-      letter-spacing: -0.2px;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      .it-brand {
-        color: #a5b4fc;
-      }
+      gap: 8px;
     }
 
     .it-brand-logo {
-      width: 22px;
-      height: 22px;
-      border-radius: 6px;
+      width: 24px;
+      height: 24px;
+      border-radius: 7px;
       background: linear-gradient(135deg, #6366f1 0%, #06b6d4 100%);
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 2px 6px rgba(99, 102, 241, 0.35);
+      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
     }
 
     .it-brand-logo svg {
-      width: 13px;
-      height: 13px;
+      width: 14px;
+      height: 14px;
       fill: #ffffff;
     }
 
-    /* Language Swap Indicator Pill */
-    .it-lang-swap-pill {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      padding: 3px 8px;
-      border-radius: 20px;
-      background: rgba(255, 255, 255, 0.85);
-      border: 1px solid rgba(203, 213, 225, 0.8);
-      font-size: 11px;
-      font-weight: 600;
-      color: #334155;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    .it-brand-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #312e81;
+      letter-spacing: -0.3px;
     }
 
     @media (prefers-color-scheme: dark) {
-      .it-lang-swap-pill {
-        background: rgba(30, 37, 54, 0.85);
+      .it-brand-title {
+        color: #c7d2fe;
+      }
+    }
+
+    /* Language Switcher Capsule */
+    .it-lang-capsule {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 30px;
+      background: rgba(255, 255, 255, 0.95);
+      border: 1px solid rgba(203, 213, 225, 0.7);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #334155;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .it-lang-capsule {
+        background: rgba(26, 32, 50, 0.85);
         border-color: rgba(255, 255, 255, 0.12);
         color: #cbd5e1;
       }
     }
 
     .it-swap-btn {
-      width: 18px;
-      height: 18px;
+      width: 20px;
+      height: 20px;
       border-radius: 50%;
       border: none;
-      background: transparent;
-      color: #6366f1;
+      background: rgba(99, 102, 241, 0.1);
+      color: #4f46e5;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: all 0.2s ease;
+      transition: all 0.22s ease;
     }
 
     .it-swap-btn:hover {
-      background: rgba(99, 102, 241, 0.15);
-      transform: rotate(180deg);
+      background: #4f46e5;
+      color: #ffffff;
+      transform: rotate(180deg) scale(1.1);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .it-swap-btn {
+        background: rgba(99, 102, 241, 0.25);
+        color: #a5b4fc;
+      }
+      .it-swap-btn:hover {
+        background: #6366f1;
+        color: #ffffff;
+      }
     }
 
     .it-swap-btn svg {
@@ -263,16 +280,17 @@
       fill: currentColor;
     }
 
-    .it-header-actions {
+    /* Header Tools */
+    .it-header-tools {
       display: flex;
       align-items: center;
-      gap: 3px;
+      gap: 4px;
     }
 
-    .it-btn-icon {
-      width: 26px;
-      height: 26px;
-      border-radius: 7px;
+    .it-btn-round {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
       border: none;
       background: transparent;
       color: #64748b;
@@ -280,50 +298,50 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: all 0.15s ease;
+      transition: all 0.16s ease;
     }
 
-    .it-btn-icon:hover {
+    .it-btn-round:hover {
       background: rgba(0, 0, 0, 0.06);
       color: #0f172a;
     }
 
     @media (prefers-color-scheme: dark) {
-      .it-btn-icon {
+      .it-btn-round {
         color: #94a3b8;
       }
-      .it-btn-icon:hover {
+      .it-btn-round:hover {
         background: rgba(255, 255, 255, 0.1);
         color: #ffffff;
       }
     }
 
-    .it-btn-icon.active {
+    .it-btn-round.active {
       color: #4f46e5;
       background: #e0e7ff;
-      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25);
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3);
     }
 
     @media (prefers-color-scheme: dark) {
-      .it-btn-icon.active {
+      .it-btn-round.active {
         color: #818cf8;
-        background: rgba(99, 102, 241, 0.25);
+        background: rgba(99, 102, 241, 0.3);
       }
     }
 
-    .it-btn-icon svg {
+    .it-btn-round svg {
       width: 14px;
       height: 14px;
       fill: currentColor;
     }
 
-    /* Popover Body */
+    /* Body Container */
     .it-body {
-      padding: 12px 14px;
+      padding: 14px 16px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      max-height: 420px;
+      gap: 12px;
+      max-height: 440px;
       overflow-y: auto;
     }
 
@@ -331,45 +349,47 @@
       width: 5px;
     }
     .it-body::-webkit-scrollbar-thumb {
-      background: #cbd5e1;
+      background: rgba(148, 163, 184, 0.5);
       border-radius: 4px;
     }
 
-    /* Source Text Section (Compact & Clean) */
-    .it-source-card {
+    /* Source Quote Card */
+    .it-source-quote {
+      position: relative;
       background: rgba(248, 250, 252, 0.7);
-      border: 1px solid rgba(226, 232, 240, 0.8);
-      border-radius: 10px;
-      padding: 7px 10px;
+      border-left: 3.5px solid #6366f1;
+      border-radius: 0 10px 10px 0;
+      padding: 8px 12px;
       display: flex;
       flex-direction: column;
       gap: 3px;
     }
 
     @media (prefers-color-scheme: dark) {
-      .it-source-card {
-        background: rgba(25, 30, 44, 0.6);
-        border-color: rgba(255, 255, 255, 0.06);
+      .it-source-quote {
+        background: rgba(23, 28, 44, 0.6);
+        border-left-color: #818cf8;
       }
     }
 
-    .it-source-meta {
+    .it-source-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      font-size: 10.5px;
-      font-weight: 600;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      color: #64748b;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: #94a3b8;
     }
 
     .it-source-text {
-      font-size: 12.5px;
-      line-height: 1.45;
-      color: #475569;
+      font-size: 13px;
+      line-height: 1.5;
+      color: #334155;
+      font-style: normal;
       word-break: break-word;
-      max-height: 65px;
+      max-height: 60px;
       overflow-y: auto;
       user-select: text;
     }
@@ -380,76 +400,94 @@
       }
     }
 
-    /* HERO TRANSLATION CARD (Trọng tâm hiển thị đẹp) */
+    /* ========================================================
+       MASTER HERO TRANSLATION CARD (NÂNG CẤP ĐỈNH CAO THẨM MỸ)
+       ======================================================== */
     .it-hero-card {
-      background: linear-gradient(145deg, #f0f7ff 0%, #f5f3ff 100%);
-      border: 1.5px solid #dbeafe;
-      border-radius: 12px;
-      padding: 12px 14px;
-      box-shadow: 0 3px 10px rgba(59, 130, 246, 0.05);
+      position: relative;
+      background: linear-gradient(145deg, rgba(238, 242, 255, 0.85) 0%, rgba(240, 249, 255, 0.95) 100%);
+      border: 1.5px solid rgba(199, 210, 254, 0.7);
+      border-radius: 14px;
+      padding: 14px 16px;
+      box-shadow: 
+        0 4px 16px rgba(79, 70, 229, 0.08),
+        0 1px 3px rgba(0, 0, 0, 0.04);
       display: flex;
       flex-direction: column;
-      gap: 6px;
-      position: relative;
+      gap: 8px;
     }
 
     @media (prefers-color-scheme: dark) {
       .it-hero-card {
-        background: linear-gradient(145deg, rgba(30, 41, 69, 0.7) 0%, rgba(27, 32, 54, 0.9) 100%);
-        border-color: rgba(99, 102, 241, 0.35);
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+        background: linear-gradient(145deg, rgba(25, 32, 54, 0.85) 0%, rgba(20, 24, 42, 0.95) 100%);
+        border-color: rgba(99, 102, 241, 0.38);
+        box-shadow: 
+          0 6px 20px rgba(0, 0, 0, 0.35),
+          inset 0 1px 0 rgba(255, 255, 255, 0.06);
       }
     }
 
-    .it-hero-meta {
+    .it-hero-top {
       display: flex;
       align-items: center;
       justify-content: space-between;
     }
 
-    .it-hero-badge {
+    .it-hero-pill {
       display: inline-flex;
       align-items: center;
       gap: 5px;
       font-size: 11px;
-      font-weight: 700;
-      color: #2563eb;
-      letter-spacing: 0.2px;
+      font-weight: 800;
+      letter-spacing: 0.4px;
+      color: #4338ca;
+      text-transform: uppercase;
     }
 
     @media (prefers-color-scheme: dark) {
-      .it-hero-badge {
-        color: #60a5fa;
+      .it-hero-pill {
+        color: #93c5fd;
       }
     }
 
-    .it-result-text {
-      font-size: 15.5px;
+    .it-hero-pill-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 8px #10b981;
+      animation: itPulse 2s infinite;
+    }
+
+    /* Translated Text Typography */
+    .it-hero-text {
+      font-size: 16.5px;
       font-weight: 600;
-      line-height: 1.6;
+      line-height: 1.62;
       color: #0f172a;
+      letter-spacing: -0.2px;
       word-break: break-word;
       user-select: text;
-      letter-spacing: -0.1px;
     }
 
     @media (prefers-color-scheme: dark) {
-      .it-result-text {
+      .it-hero-text {
         color: #ffffff;
       }
     }
 
-    /* Phonetic IPA Tag */
+    /* Phonetic Audio Badge */
     .it-phonetic-badge {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: 6px;
       font-size: 12px;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       color: #0284c7;
       background: rgba(2, 132, 199, 0.1);
-      padding: 2px 7px;
-      border-radius: 6px;
+      border: 1px solid rgba(2, 132, 199, 0.2);
+      padding: 3px 9px;
+      border-radius: 7px;
       width: fit-content;
       margin-top: 2px;
     }
@@ -458,38 +496,39 @@
       .it-phonetic-badge {
         color: #38bdf8;
         background: rgba(56, 189, 248, 0.15);
+        border-color: rgba(56, 189, 248, 0.25);
       }
     }
 
-    /* Skeleton Loading Bar */
-    .it-skeleton {
-      height: 18px;
+    /* Loading Shimmer Bar */
+    .it-skeleton-bar {
+      height: 20px;
       border-radius: 6px;
-      background: linear-gradient(90deg, #e2e8f0 25%, #cbd5e1 50%, #e2e8f0 75%);
+      background: linear-gradient(90deg, #e0e7ff 25%, #c7d2fe 50%, #e0e7ff 75%);
       background-size: 200% 100%;
       animation: itShimmer 1.4s infinite;
       margin: 4px 0;
     }
 
     @media (prefers-color-scheme: dark) {
-      .it-skeleton {
-        background: linear-gradient(90deg, #1e2436 25%, #2c354e 50%, #1e2436 75%);
+      .it-skeleton-bar {
+        background: linear-gradient(90deg, #1e253c 25%, #2a3454 50%, #1e253c 75%);
         background-size: 200% 100%;
       }
     }
 
-    /* Dictionary Breakdown Section */
-    .it-dict-container {
+    /* Dictionary & Synonyms Section */
+    .it-dict-box {
       display: flex;
       flex-direction: column;
-      gap: 7px;
-      margin-top: 2px;
-      padding-top: 8px;
+      gap: 8px;
+      margin-top: 4px;
+      padding-top: 10px;
       border-top: 1px dashed rgba(203, 213, 225, 0.8);
     }
 
     @media (prefers-color-scheme: dark) {
-      .it-dict-container {
+      .it-dict-box {
         border-color: rgba(255, 255, 255, 0.1);
       }
     }
@@ -497,62 +536,65 @@
     .it-dict-row {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 5px;
     }
 
-    .it-pos-label {
-      font-size: 10.5px;
-      font-weight: 700;
+    .it-pos-tag {
+      font-size: 10px;
+      font-weight: 800;
       text-transform: uppercase;
-      padding: 1px 6px;
-      border-radius: 4px;
+      letter-spacing: 0.5px;
+      padding: 2px 7px;
+      border-radius: 5px;
       width: fit-content;
-      letter-spacing: 0.3px;
     }
 
-    .it-pos-noun { background: #dcfce7; color: #15803d; }
-    .it-pos-verb { background: #ede9fe; color: #6d28d9; }
-    .it-pos-adj { background: #fef3c7; color: #b45309; }
-    .it-pos-other { background: #f1f5f9; color: #475569; }
+    .it-pos-noun { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+    .it-pos-verb { background: #ede9fe; color: #5b21b6; border: 1px solid #ddd6fe; }
+    .it-pos-adj  { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+    .it-pos-other { background: #f1f5f9; color: #334155; border: 1px solid #e2e8f0; }
 
     @media (prefers-color-scheme: dark) {
-      .it-pos-noun { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
-      .it-pos-verb { background: rgba(168, 85, 247, 0.2); color: #c084fc; }
-      .it-pos-adj { background: rgba(245, 158, 11, 0.2); color: #fcd34d; }
-      .it-pos-other { background: rgba(255, 255, 255, 0.1); color: #cbd5e1; }
+      .it-pos-noun { background: rgba(34, 197, 94, 0.18); color: #4ade80; border-color: rgba(34, 197, 94, 0.3); }
+      .it-pos-verb { background: rgba(168, 85, 247, 0.18); color: #c084fc; border-color: rgba(168, 85, 247, 0.3); }
+      .it-pos-adj  { background: rgba(245, 158, 11, 0.18); color: #fcd34d; border-color: rgba(245, 158, 11, 0.3); }
+      .it-pos-other { background: rgba(255, 255, 255, 0.1); color: #cbd5e1; border-color: rgba(255, 255, 255, 0.15); }
     }
 
-    .it-synonyms-wrap {
+    .it-synonyms-grid {
       display: flex;
       flex-wrap: wrap;
-      gap: 4px;
+      gap: 5px;
     }
 
-    .it-syn-pill {
+    .it-syn-bubble {
       font-size: 11.5px;
-      padding: 2px 7px;
-      border-radius: 12px;
-      background: rgba(255, 255, 255, 0.7);
-      border: 1px solid rgba(203, 213, 225, 0.8);
+      font-weight: 500;
+      padding: 3px 9px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.85);
+      border: 1px solid rgba(203, 213, 225, 0.7);
       color: #334155;
       cursor: pointer;
-      transition: all 0.12s ease;
+      transition: all 0.16s ease;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
     }
 
-    .it-syn-pill:hover {
+    .it-syn-bubble:hover {
       background: #4f46e5;
       color: #ffffff;
       border-color: #4f46e5;
-      transform: translateY(-1px);
+      transform: translateY(-1.5px);
+      box-shadow: 0 3px 8px rgba(79, 70, 229, 0.25);
     }
 
     @media (prefers-color-scheme: dark) {
-      .it-syn-pill {
-        background: rgba(30, 36, 52, 0.8);
+      .it-syn-bubble {
+        background: rgba(28, 35, 54, 0.8);
         border-color: rgba(255, 255, 255, 0.1);
         color: #cbd5e1;
       }
-      .it-syn-pill:hover {
+      .it-syn-bubble:hover {
         background: #6366f1;
         color: #ffffff;
       }
@@ -563,166 +605,200 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 9px 14px;
-      background: rgba(248, 250, 252, 0.95);
-      border-top: 1px solid rgba(226, 232, 240, 0.85);
+      padding: 10px 16px;
+      background: rgba(248, 250, 252, 0.8);
+      border-top: 1px solid rgba(226, 232, 240, 0.75);
       gap: 8px;
     }
 
     @media (prefers-color-scheme: dark) {
       .it-footer {
-        background: rgba(20, 24, 36, 0.95);
-        border-color: rgba(255, 255, 255, 0.08);
+        background: rgba(18, 22, 34, 0.8);
+        border-color: rgba(255, 255, 255, 0.07);
       }
     }
 
-    .it-footer-left {
+    .it-select-wrap {
+      position: relative;
       display: flex;
       align-items: center;
-      gap: 6px;
     }
 
     .it-target-select {
-      font-size: 11.5px;
+      appearance: none;
+      -webkit-appearance: none;
+      font-size: 12px;
       font-weight: 600;
-      padding: 4px 7px;
-      border-radius: 7px;
-      border: 1px solid #cbd5e1;
+      padding: 5px 24px 5px 9px;
+      border-radius: 9px;
+      border: 1px solid rgba(203, 213, 225, 0.8);
       background: #ffffff;
       color: #1e293b;
       cursor: pointer;
       outline: none;
-      transition: border-color 0.15s ease;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      transition: all 0.16s ease;
     }
 
-    .it-target-select:focus {
+    .it-target-select:hover {
       border-color: #6366f1;
     }
 
     @media (prefers-color-scheme: dark) {
       .it-target-select {
-        background: #1c2234;
-        border-color: #334155;
+        background: #1c2236;
+        border-color: rgba(255, 255, 255, 0.14);
         color: #f1f5f9;
       }
+    }
+
+    .it-select-arrow {
+      position: absolute;
+      right: 7px;
+      pointer-events: none;
+      width: 10px;
+      height: 10px;
+      fill: #64748b;
     }
 
     .it-footer-actions {
       display: flex;
       align-items: center;
-      gap: 5px;
+      gap: 6px;
     }
 
-    .it-action-btn {
-      display: flex;
+    .it-btn-action {
+      display: inline-flex;
       align-items: center;
-      gap: 4px;
-      font-size: 11.5px;
+      gap: 5px;
+      font-size: 12px;
       font-weight: 600;
-      padding: 4px 8px;
-      border-radius: 7px;
-      border: 1px solid #e2e8f0;
+      padding: 5px 10px;
+      border-radius: 9px;
+      border: 1px solid rgba(226, 232, 240, 0.9);
       background: #ffffff;
       color: #334155;
       cursor: pointer;
-      transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+      transition: all 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
     }
 
-    .it-action-btn:hover {
+    .it-btn-action:hover {
       background: #f1f5f9;
       color: #0f172a;
       border-color: #cbd5e1;
       transform: translateY(-1px);
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
     }
 
-    .it-action-btn:active {
+    .it-btn-action:active {
       transform: translateY(0);
     }
 
     @media (prefers-color-scheme: dark) {
-      .it-action-btn {
-        background: #1c2234;
-        border-color: rgba(255, 255, 255, 0.1);
+      .it-btn-action {
+        background: #1c2236;
+        border-color: rgba(255, 255, 255, 0.12);
         color: #cbd5e1;
       }
-      .it-action-btn:hover {
-        background: #283048;
+      .it-btn-action:hover {
+        background: #27304a;
         color: #ffffff;
       }
     }
 
-    .it-action-btn.primary {
-      background: linear-gradient(135deg, #4f46e5, #0ea5e9);
+    /* Primary Radiant Button (Copy) */
+    .it-btn-action.primary {
+      background: linear-gradient(135deg, #6366f1 0%, #3b82f6 100%);
       color: #ffffff;
       border: none;
+      box-shadow: 0 3px 12px rgba(99, 102, 241, 0.35);
     }
 
-    .it-action-btn.primary:hover {
-      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
+    .it-btn-action.primary:hover {
+      background: linear-gradient(135deg, #4f46e5 0%, #2563eb 100%);
+      box-shadow: 0 5px 16px rgba(99, 102, 241, 0.5);
       color: #ffffff;
     }
 
-    .it-action-btn.copied {
+    .it-btn-action.copied {
       background: #10b981 !important;
       border-color: #10b981 !important;
       color: #ffffff !important;
+      box-shadow: 0 3px 12px rgba(16, 185, 129, 0.4) !important;
     }
 
-    .it-action-btn svg {
+    .it-btn-action svg {
       width: 13px;
       height: 13px;
       fill: currentColor;
+    }
+
+    /* Keyboard shortcut badge */
+    .it-kbd {
+      font-size: 9.5px;
+      font-family: inherit;
+      padding: 1px 4px;
+      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.08);
+      color: inherit;
+      opacity: 0.75;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .it-kbd {
+        background: rgba(255, 255, 255, 0.14);
+      }
     }
 
     /* Soundwave animation for speaking */
     .it-speaking-wave {
       display: inline-flex;
       align-items: flex-end;
-      gap: 2px;
+      gap: 2.5px;
       height: 12px;
       margin-left: 2px;
     }
     .it-wave-bar {
-      width: 2px;
+      width: 2.5px;
       background: currentColor;
-      border-radius: 1px;
-      animation: itSoundWave 0.8s ease-in-out infinite alternate;
+      border-radius: 1.5px;
+      animation: itSoundWave 0.75s ease-in-out infinite alternate;
     }
     .it-wave-bar:nth-child(1) { height: 4px; animation-delay: 0.1s; }
-    .it-wave-bar:nth-child(2) { height: 11px; animation-delay: 0.3s; }
+    .it-wave-bar:nth-child(2) { height: 12px; animation-delay: 0.3s; }
     .it-wave-bar:nth-child(3) { height: 7px; animation-delay: 0.2s; }
 
     /* Error Toast */
     .it-error-card {
-      padding: 10px 12px;
-      border-radius: 8px;
+      padding: 10px 14px;
+      border-radius: 10px;
       background: #fef2f2;
       border: 1px solid #fecaca;
       color: #b91c1c;
-      font-size: 12px;
+      font-size: 12.5px;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
     }
 
     @media (prefers-color-scheme: dark) {
       .it-error-card {
-        background: rgba(185, 28, 28, 0.15);
-        border-color: rgba(185, 28, 28, 0.3);
+        background: rgba(185, 28, 28, 0.16);
+        border-color: rgba(185, 28, 28, 0.35);
         color: #fca5a5;
       }
     }
 
     /* Keyframes */
-    @keyframes itFadeIn {
-      from { opacity: 0; transform: scale(0.85); }
+    @keyframes itScaleIn {
+      from { opacity: 0; transform: scale(0.8); }
       to { opacity: 1; transform: scale(1); }
     }
 
-    @keyframes itPopIn {
-      from { opacity: 0; transform: translateY(8px) scale(0.96); }
-      to { opacity: 1; transform: translateY(0) scale(1); }
+    @keyframes itSpringIn {
+      0% { opacity: 0; transform: translateY(12px) scale(0.95); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
     }
 
     @keyframes itShimmer {
@@ -734,6 +810,11 @@
       0% { height: 3px; }
       100% { height: 12px; }
     }
+
+    @keyframes itPulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.85); }
+    }
   `;
   shadow.appendChild(styleEl);
 
@@ -742,7 +823,7 @@
   container.className = "it-wrapper";
   shadow.appendChild(container);
 
-  // SVG Icons
+  // SVG Icons Library
   const ICONS = {
     translate: `<svg viewBox="0 0 24 24"><path d="M12.87 15.07l-2.54-2.51.03-.08c1.74-1.94 2.98-4.17 3.71-6.49H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>`,
     speaker: `<svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`,
@@ -752,10 +833,11 @@
     close: `<svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>`,
     replace: `<svg viewBox="0 0 24 24"><path d="M19 8l-4 4h3c0 3.31-2.69 6-6 6-1.01 0-1.97-.25-2.8-.7l-1.46 1.46C8.97 19.54 10.43 20 12 20c4.42 0 8-3.58 8-8h3l-4-4zM6 12c0-3.31 2.69-6 6-6 1.01 0 1.97.25 2.8.7l1.46-1.46C15.03 4.46 13.57 4 12 4c-4.42 0-8 3.58-8 8H1l4 4 4-4H6z"/></svg>`,
     external: `<svg viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>`,
-    swap: `<svg viewBox="0 0 24 24"><path d="M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"/></svg>`
+    swap: `<svg viewBox="0 0 24 24"><path d="M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"/></svg>`,
+    arrowDown: `<svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>`
   };
 
-  // Text-To-Speech with animation
+  // Text-To-Speech with wave animation
   function speakText(text, langCode, triggerBtn) {
     if (!text || !("speechSynthesis" in window)) return;
     window.speechSynthesis.cancel();
@@ -775,12 +857,12 @@
       `;
     }
 
-    utterance.onend = () => {
+    const resetBtn = () => {
       if (triggerBtn) triggerBtn.innerHTML = ICONS.speaker;
     };
-    utterance.onerror = () => {
-      if (triggerBtn) triggerBtn.innerHTML = ICONS.speaker;
-    };
+
+    utterance.onend = resetBtn;
+    utterance.onerror = resetBtn;
 
     window.speechSynthesis.speak(utterance);
   }
@@ -800,15 +882,15 @@
     container.style.visibility = "hidden";
 
     requestAnimationFrame(() => {
-      const popoverWidth = elem.offsetWidth || 380;
-      const popoverHeight = elem.offsetHeight || 260;
+      const popoverWidth = elem.offsetWidth || 400;
+      const popoverHeight = elem.offsetHeight || 280;
 
       const viewportWidth = window.innerWidth;
       const viewportHeight = window.innerHeight;
       const scrollX = window.scrollX;
       const scrollY = window.scrollY;
 
-      const MARGIN = 12;
+      const MARGIN = 14;
 
       // Horizontal
       let left = rect.left + scrollX;
@@ -820,11 +902,11 @@
       }
 
       // Vertical (prefer below)
-      let top = rect.bottom + 8 + scrollY;
+      let top = rect.bottom + 10 + scrollY;
       const spaceBelow = viewportHeight - rect.bottom;
 
-      if (spaceBelow < popoverHeight + 16 && rect.top > popoverHeight + 16) {
-        top = rect.top - popoverHeight - 8 + scrollY;
+      if (spaceBelow < popoverHeight + 20 && rect.top > popoverHeight + 20) {
+        top = rect.top - popoverHeight - 10 + scrollY;
       }
 
       container.style.left = `${Math.round(left)}px`;
@@ -833,11 +915,11 @@
     });
   }
 
-  // Replace text in host page (Supports input, textarea, contenteditable, and standard DOM)
+  // Replace text in host page
   function replaceSelectedText(newText) {
     if (!newText) return;
 
-    // 1. If inside an input or textarea
+    // 1. Input or Textarea
     if (activeInputElement && typeof activeInputElement.selectionStart === "number") {
       const start = activeInputElement.selectionStart;
       const end = activeInputElement.selectionEnd;
@@ -849,14 +931,13 @@
       return;
     }
 
-    // 2. If in contentEditable or standard DOM range
+    // 2. ContentEditable or standard DOM range
     if (activeRange) {
       try {
         activeRange.deleteContents();
         const textNode = document.createTextNode(newText);
         activeRange.insertNode(textNode);
         
-        // Re-select inserted text
         const sel = window.getSelection();
         if (sel) {
           sel.removeAllRanges();
@@ -867,11 +948,10 @@
         hideUI();
         return;
       } catch (err) {
-        console.warn("DOM replacement error:", err);
+        console.warn("DOM replacement fallback:", err);
       }
     }
 
-    // 3. Fallback: Copy to clipboard if replacement isn't possible
     navigator.clipboard.writeText(newText);
   }
 
@@ -896,8 +976,8 @@
     let left = rect.right + 6 + scrollX;
     let top = rect.bottom + 4 + scrollY;
 
-    if (left + 38 > scrollX + window.innerWidth) {
-      left = rect.right - 36 + scrollX;
+    if (left + 40 > scrollX + window.innerWidth) {
+      left = rect.right - 38 + scrollX;
     }
 
     container.style.left = `${Math.round(left)}px`;
@@ -917,7 +997,7 @@
       .replace(/'/g, "&#039;");
   }
 
-  // Render Modern Popover Card
+  // Render Master Popover Card
   function renderPopover(text, rect, targetLangOverride) {
     const currentTargetLang = targetLangOverride || settings.targetLang || "vi";
     const srcData = LANG_DATA[currentDetectedSourceLang] || { flag: "🌐", name: currentDetectedSourceLang };
@@ -929,11 +1009,11 @@
         <div class="it-header">
           <div class="it-brand">
             <div class="it-brand-logo">${ICONS.translate}</div>
-            <span>InstantTranslate</span>
+            <span class="it-brand-title">InstantTranslate</span>
           </div>
 
-          <!-- Language Swap Pill -->
-          <div class="it-lang-swap-pill">
+          <!-- Language Switcher Capsule -->
+          <div class="it-lang-capsule">
             <span id="it-src-flag">${srcData.flag}</span>
             <span id="it-src-name">${srcData.name.split(" ")[0]}</span>
             <button class="it-swap-btn" id="it-swap-lang-btn" title="Đảo chiều ngôn ngữ">
@@ -943,12 +1023,12 @@
             <span id="it-trg-name">${trgData.name.split(" ")[0]}</span>
           </div>
 
-          <!-- Actions -->
-          <div class="it-header-actions">
-            <button class="it-btn-icon ${isPinned ? "active" : ""}" id="it-pin-btn" title="${isPinned ? "Bỏ ghim" : "Ghim cửa sổ"}">
+          <!-- Header Tools -->
+          <div class="it-header-tools">
+            <button class="it-btn-round ${isPinned ? "active" : ""}" id="it-pin-btn" title="${isPinned ? "Bỏ ghim" : "Ghim cửa sổ"}">
               ${ICONS.pin}
             </button>
-            <button class="it-btn-icon" id="it-close-btn" title="Đóng (Esc)">
+            <button class="it-btn-round" id="it-close-btn" title="Đóng (Esc)">
               ${ICONS.close}
             </button>
           </div>
@@ -956,38 +1036,39 @@
 
         <!-- Body -->
         <div class="it-body">
-          <!-- Source Card -->
-          <div class="it-source-card">
-            <div class="it-source-meta">
+          <!-- Source Quote Box -->
+          <div class="it-source-quote">
+            <div class="it-source-header">
               <span>VĂN BẢN GỐC</span>
-              <button class="it-btn-icon" id="it-tts-source" title="Phát âm bản gốc">
+              <button class="it-btn-round" id="it-tts-source" title="Phát âm văn bản gốc">
                 ${ICONS.speaker}
               </button>
             </div>
             <div class="it-source-text">${escapeHtml(text)}</div>
           </div>
 
-          <!-- HERO TRANSLATION CARD -->
+          <!-- HERO TRANSLATION CARD (NÂNG CẤP ĐẲNG CẤP) -->
           <div class="it-hero-card">
-            <div class="it-hero-meta">
-              <span class="it-hero-badge">
-                ${trgData.flag} BẢN DỊCH TIẾNG ${trgData.name.toUpperCase()}
+            <div class="it-hero-top">
+              <span class="it-hero-pill">
+                <span class="it-hero-pill-dot"></span>
+                <span>${trgData.flag} BẢN DỊCH TIẾNG ${trgData.name.toUpperCase()}</span>
               </span>
-              <button class="it-btn-icon" id="it-tts-result" title="Phát âm bản dịch" style="display:none;">
+              <button class="it-btn-round" id="it-tts-result" title="Phát âm bản dịch" style="display:none;">
                 ${ICONS.speaker}
               </button>
             </div>
 
             <div id="it-result-container">
-              <div class="it-skeleton" style="width: 90%;"></div>
-              <div class="it-skeleton" style="width: 65%;"></div>
+              <div class="it-skeleton-bar" style="width: 92%;"></div>
+              <div class="it-skeleton-bar" style="width: 68%;"></div>
             </div>
           </div>
         </div>
 
-        <!-- Footer -->
+        <!-- Footer Toolbar -->
         <div class="it-footer">
-          <div class="it-footer-left">
+          <div class="it-select-wrap">
             <select class="it-target-select" id="it-lang-select">
               <option value="vi" ${currentTargetLang === "vi" ? "selected" : ""}>🇻🇳 Tiếng Việt</option>
               <option value="en" ${currentTargetLang === "en" ? "selected" : ""}>🇺🇸 Tiếng Anh</option>
@@ -1002,23 +1083,26 @@
               <option value="th" ${currentTargetLang === "th" ? "selected" : ""}>🇹🇭 Tiếng Thái</option>
               <option value="it" ${currentTargetLang === "it" ? "selected" : ""}>🇮🇹 Tiếng Ý</option>
             </select>
+            <div class="it-select-arrow">${ICONS.arrowDown}</div>
           </div>
 
           <div class="it-footer-actions">
-            <!-- Replace Button (Cực hữu ích) -->
-            <button class="it-action-btn" id="it-replace-btn" title="Thay thế chữ gốc bằng bản dịch (Ctrl+Enter)">
+            <!-- Replace Button -->
+            <button class="it-btn-action" id="it-replace-btn" title="Thay thế chữ gốc trên web (Ctrl+Enter)">
               ${ICONS.replace}
               <span>Thay thế</span>
+              <span class="it-kbd">↵</span>
             </button>
 
             <!-- Copy Button -->
-            <button class="it-action-btn primary" id="it-copy-btn" title="Sao chép bản dịch (Ctrl+C)">
+            <button class="it-btn-action primary" id="it-copy-btn" title="Sao chép bản dịch (Ctrl+C)">
               ${ICONS.copy}
               <span>Chép</span>
+              <span class="it-kbd">C</span>
             </button>
 
-            <!-- Google Translate External Tab -->
-            <button class="it-btn-icon" id="it-ext-btn" title="Mở trên Google Translate">
+            <!-- Google Translate Link -->
+            <button class="it-btn-round" id="it-ext-btn" title="Mở trang Google Translate">
               ${ICONS.external}
             </button>
           </div>
@@ -1043,13 +1127,12 @@
       hideUI();
     });
 
-    // Language Dropdown change
     const langSelect = container.querySelector("#it-lang-select");
     langSelect.addEventListener("change", (e) => {
       executeTranslation(text, rect, e.target.value);
     });
 
-    // Swap Language Button (e.g., EN -> VI becomes VI -> EN)
+    // Language Swap Button
     const swapBtn = container.querySelector("#it-swap-lang-btn");
     swapBtn.addEventListener("click", () => {
       const newTarget = currentDetectedSourceLang === "vi" ? "en" : currentDetectedSourceLang;
@@ -1067,7 +1150,7 @@
       speakText(container.dataset.translatedText || "", currentTargetLang, ttsResultBtn);
     });
 
-    // Copy Button
+    // Copy Button with Micro-Interaction
     const copyBtn = container.querySelector("#it-copy-btn");
     copyBtn.addEventListener("click", async () => {
       const translated = container.dataset.translatedText;
@@ -1078,10 +1161,10 @@
         copyBtn.innerHTML = `${ICONS.check} <span>Đã chép!</span>`;
         setTimeout(() => {
           copyBtn.classList.remove("copied");
-          copyBtn.innerHTML = `${ICONS.copy} <span>Chép</span>`;
+          copyBtn.innerHTML = `${ICONS.copy} <span>Chép</span> <span class="it-kbd">C</span>`;
         }, 1600);
       } catch (err) {
-        console.warn("Clipboard failed:", err);
+        console.warn("Clipboard copy failed:", err);
       }
     });
 
@@ -1094,7 +1177,7 @@
       }
     });
 
-    // External Button
+    // External Tab
     const extBtn = container.querySelector("#it-ext-btn");
     extBtn.addEventListener("click", () => {
       const url = `https://translate.google.com/?sl=auto&tl=${currentTargetLang}&text=${encodeURIComponent(text)}&op=translate`;
@@ -1136,7 +1219,7 @@
           container.dataset.sourceLang = data.sourceLang;
           currentDetectedSourceLang = data.sourceLang || "en";
 
-          // Update Lang Pill
+          // Update Lang Capsule
           const sData = LANG_DATA[data.sourceLang] || { flag: "🌐", name: data.sourceLang };
           const tData = LANG_DATA[data.targetLang] || { flag: "🌐", name: data.targetLang };
           if (srcFlagEl) srcFlagEl.textContent = sData.flag;
@@ -1144,7 +1227,7 @@
           if (trgFlagEl) trgFlagEl.textContent = tData.flag;
           if (trgNameEl) trgNameEl.textContent = tData.name.split(" ")[0];
 
-          let html = `<div class="it-result-text">${escapeHtml(data.translatedText)}</div>`;
+          let html = `<div class="it-hero-text">${escapeHtml(data.translatedText)}</div>`;
 
           if (data.transliteration) {
             html += `<div class="it-phonetic-badge">🔊 /${escapeHtml(data.transliteration)}/</div>`;
@@ -1152,7 +1235,7 @@
 
           // Dictionary breakdown with stylish color badges
           if (settings.showDict && data.dict && data.dict.length > 0) {
-            html += `<div class="it-dict-container">`;
+            html += `<div class="it-dict-box">`;
             for (const item of data.dict) {
               const posLower = (item.pos || "").toLowerCase();
               let posClass = "it-pos-other";
@@ -1163,9 +1246,9 @@
 
               html += `
                 <div class="it-dict-row">
-                  <span class="it-pos-label ${posClass}">${escapeHtml(posVi)}</span>
-                  <div class="it-synonyms-wrap">
-                    ${item.terms.map(t => `<span class="it-syn-pill" title="Click để copy">${escapeHtml(t)}</span>`).join("")}
+                  <span class="it-pos-tag ${posClass}">${escapeHtml(posVi)}</span>
+                  <div class="it-synonyms-grid">
+                    ${item.terms.map(t => `<span class="it-syn-bubble" title="Click để copy">${escapeHtml(t)}</span>`).join("")}
                   </div>
                 </div>
               `;
@@ -1177,7 +1260,7 @@
           if (ttsResultBtn) ttsResultBtn.style.display = "flex";
 
           // Click on synonym pill copies it
-          resultContainer.querySelectorAll(".it-syn-pill").forEach(pill => {
+          resultContainer.querySelectorAll(".it-syn-bubble").forEach(pill => {
             pill.addEventListener("click", () => {
               navigator.clipboard.writeText(pill.textContent);
               const old = pill.textContent;
@@ -1258,15 +1341,13 @@
 
   // Global mouseup listener
   document.addEventListener("mouseup", (e) => {
-    // If click was inside shadow root, don't trigger or close
     if (e.composedPath().includes(host)) return;
-
     setTimeout(() => {
       handleSelection(e);
     }, 20);
   });
 
-  // Double Click listener (optional quick translate for single words)
+  // Double Click listener
   document.addEventListener("dblclick", (e) => {
     if (!settings.enabled || !settings.doubleClickToTranslate) return;
     if (e.composedPath().includes(host)) return;
@@ -1284,7 +1365,7 @@
     }
   });
 
-  // Global Keyboard Shortcuts
+  // Keyboard Shortcuts
   document.addEventListener("keydown", (e) => {
     if (container.style.display !== "block") return;
 
@@ -1309,7 +1390,7 @@
   chrome.runtime?.onMessage?.addListener((msg) => {
     if (msg.action === "TRIGGER_SELECTION_TRANSLATE" && msg.text) {
       const sel = window.getSelection();
-      let rect = { left: window.innerWidth / 2 - 190, top: 120, right: window.innerWidth / 2 + 190, bottom: 140 };
+      let rect = { left: window.innerWidth / 2 - 200, top: 120, right: window.innerWidth / 2 + 200, bottom: 140 };
       if (sel && sel.rangeCount > 0) {
         rect = sel.getRangeAt(0).getBoundingClientRect();
       }
