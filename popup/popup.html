@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>InstantTranslate - Cài Đặt</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M12.87 15.07l-2.54-2.51.03-.08c1.74-1.94 2.98-4.17 3.71-6.49H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="brand-title">InstantTranslate</h1>
+          <p class="brand-subtitle">Dịch chuột siêu tốc • 100% Miễn phí</p>
+        </div>
+      </div>
+      <label class="switch" title="Bật/Tắt dịch tự động">
+        <input type="checkbox" id="toggle-enabled" checked>
+        <span class="slider"></span>
+      </label>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs">
+      <button class="tab-btn active" data-tab="settings">Cài Đặt</button>
+      <button class="tab-btn" data-tab="test">Dịch Thử Nhanh</button>
+      <button class="tab-btn" data-tab="about">Hướng Dẫn</button>
+    </nav>
+
+    <!-- Tab 1: Settings -->
+    <section class="tab-content active" id="tab-settings">
+      <!-- Target Language -->
+      <div class="setting-group">
+        <label class="setting-label" for="select-target-lang">
+          <span>Ngôn ngữ đích mặc định</span>
+          <span class="setting-hint">Ngôn ngữ hiển thị bản dịch</span>
+        </label>
+        <div class="select-wrapper">
+          <select id="select-target-lang" class="custom-select">
+            <option value="vi">🇻🇳 Tiếng Việt</option>
+            <option value="en">🇬🇧 Tiếng Anh</option>
+            <option value="zh-CN">🇨🇳 Tiếng Trung (Giản thể)</option>
+            <option value="zh-TW">🇹🇼 Tiếng Trung (Phồn thể)</option>
+            <option value="ja">🇯🇵 Tiếng Nhật</option>
+            <option value="ko">🇰🇷 Tiếng Hàn</option>
+            <option value="fr">🇫🇷 Tiếng Pháp</option>
+            <option value="de">🇩🇪 Tiếng Đức</option>
+            <option value="es">🇪🇸 Tiếng Tây Ban Nha</option>
+            <option value="ru">🇷🇺 Tiếng Nga</option>
+            <option value="th">🇹🇭 Tiếng Thái</option>
+            <option value="it">🇮🇹 Tiếng Ý</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Trigger Mode -->
+      <div class="setting-group">
+        <label class="setting-label">
+          <span>Chế độ kích hoạt</span>
+          <span class="setting-hint">Cách hiện cửa sổ dịch trên trang web</span>
+        </label>
+        <div class="radio-options">
+          <label class="radio-card">
+            <input type="radio" name="triggerMode" value="auto" checked>
+            <div class="radio-body">
+              <div class="radio-title">🚀 Tự động tức thì</div>
+              <div class="radio-desc">Dịch ngay lập tức khi thả chuột sau khi bôi đen chữ.</div>
+            </div>
+          </label>
+          <label class="radio-card">
+            <input type="radio" name="triggerMode" value="icon">
+            <div class="radio-body">
+              <div class="radio-title">💡 Nút kích hoạt</div>
+              <div class="radio-desc">Hiện biểu tượng dịch nhỏ bên cạnh chữ, bấm vào để mở dịch.</div>
+            </div>
+          </label>
+          <label class="radio-card">
+            <input type="radio" name="triggerMode" value="ctrl">
+            <div class="radio-body">
+              <div class="radio-title">⌨️ Giữ phím Ctrl</div>
+              <div class="radio-desc">Chỉ dịch khi vừa giữ phím Ctrl (hoặc Cmd) vừa bôi đen.</div>
+            </div>
+          </label>
+          <label class="radio-card">
+            <input type="radio" name="triggerMode" value="alt">
+            <div class="radio-body">
+              <div class="radio-title">⌨️ Giữ phím Alt</div>
+              <div class="radio-desc">Chỉ dịch khi giữ phím Alt vừa bôi đen.</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Additional Options -->
+      <div class="setting-group">
+        <label class="setting-label">Tùy chọn nâng cao</label>
+        <div class="checkbox-list">
+          <label class="checkbox-row">
+            <input type="checkbox" id="check-show-dict" checked>
+            <span>Hiển thị phân loại từ điển chi tiết (Danh từ, Động từ...)</span>
+          </label>
+          <label class="checkbox-row">
+            <input type="checkbox" id="check-auto-tts">
+            <span>Tự động phát âm bản dịch khi hiển thị (Auto TTS)</span>
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 2: Live Test Box -->
+    <section class="tab-content" id="tab-test">
+      <div class="test-container">
+        <div class="test-controls">
+          <select id="test-target-lang" class="custom-select select-sm">
+            <option value="vi">Sang: Tiếng Việt</option>
+            <option value="en">Sang: Tiếng Anh</option>
+            <option value="zh-CN">Sang: Tiếng Trung</option>
+            <option value="ja">Sang: Tiếng Nhật</option>
+            <option value="ko">Sang: Tiếng Hàn</option>
+            <option value="fr">Sang: Tiếng Pháp</option>
+            <option value="de">Sang: Tiếng Đức</option>
+          </select>
+          <button id="btn-run-test" class="btn-primary">
+            <svg viewBox="0 0 24 24" class="btn-icon">
+              <path d="M12.87 15.07l-2.54-2.51.03-.08c1.74-1.94 2.98-4.17 3.71-6.49H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/>
+            </svg>
+            Dịch ngay
+          </button>
+        </div>
+
+        <div class="test-box">
+          <textarea id="test-input" placeholder="Nhập hoặc dán văn bản cần dịch thử tại đây (Ví dụ: Artificial Intelligence is revolutionizing modern technology...)" rows="3"></textarea>
+        </div>
+
+        <div class="test-result-wrapper" id="test-result-wrapper" style="display: none;">
+          <div class="test-result-header">
+            <span class="test-result-tag" id="test-result-tag">Kết quả</span>
+            <div class="test-result-actions">
+              <button class="icon-btn-sm" id="btn-test-tts" title="Phát âm">
+                <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+              </button>
+              <button class="icon-btn-sm" id="btn-test-copy" title="Sao chép">
+                <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="test-result-text" id="test-result-text"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 3: About & Help -->
+    <section class="tab-content" id="tab-about">
+      <div class="about-container">
+        <div class="about-card">
+          <h3>🌟 Mẹo Sử Dụng</h3>
+          <ul>
+            <li><strong>Bôi đen chữ:</strong> Cửa sổ dịch tự động hiển thị ngay sát chữ.</li>
+            <li><strong>Nút Ghim 📌:</strong> Nhấn ghim để popup không biến mất khi bấm ra chỗ khác.</li>
+            <li><strong>Phát âm 🔊:</strong> Nghe giọng chuẩn của người bản xứ cho cả văn bản gốc và bản dịch.</li>
+            <li><strong>Phím tắt nhanh:</strong> Bấm phím <code>Esc</code> để đóng cửa sổ dịch tức thì.</li>
+            <li><strong>Menu chuột phải:</strong> Bôi đen chữ rồi click chuột phải chọn "Dịch nhanh bằng InstantTranslate".</li>
+          </ul>
+        </div>
+        <div class="about-footer">
+          <p>InstantTranslate v1.0.0 • Manifest V3</p>
+          <p class="about-badge">100% Free & Open Source • Không cần API Key</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer Toast -->
+    <div id="save-toast" class="save-toast">Đã lưu cấu hình tự động</div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
