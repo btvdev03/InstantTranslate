@@ -8,6 +8,10 @@ Desktop.ini
 *.tmp
 *.bak
 
+# Build & releases
+dist/
+*.zip
+
 # Local scripts & credentials
 *.bat
 *.sh
