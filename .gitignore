@@ -3,9 +3,12 @@
 Thumbs.db
 Desktop.ini
 
-# Logs
+# Logs & Temporary files
 *.log
-
-# Temporary files
 *.tmp
 *.bak
+
+# Local scripts & credentials
+*.bat
+*.sh
+.env
